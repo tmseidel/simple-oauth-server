@@ -35,17 +35,7 @@ public class LoginService {
         this.passwordEncoder = passwordEncoder;
     }
 
-    @Transactional
-    public Application getApplicationByIdAndRedirect(String clientId, String redirectUrl) {
-        LOGGER.debug("Entering authentication with clientId {} and url {}", clientId, redirectUrl);
-        Optional<Application> result = applicationRepository.findOneByClientIdAndActivated(clientId, true);
-        Application application = result.orElseThrow(() -> new ApplicationNotFoundException(String.format("Application with id %s not found", clientId)));
-        if (application.getLoginUrls().contains(redirectUrl)) {
-            return application;
-        }
-        throw new ApplicationNotFoundException(String.format("The application with the given redirect %s was not found", redirectUrl));
 
-    }
 
     public void checkUser(String username, String password, String clientId, String ipAdress) {
         Optional<User> user = userRepository.findOneByEmail(username);

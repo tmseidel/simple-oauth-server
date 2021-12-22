@@ -14,10 +14,6 @@ import java.util.function.Function;
 @Component
 public class JwtTokenService {
 
-    public static final String SCOPE_API_ACCESS = "api.access";
-    @Value("${jwt.secret}")
-    private String secret;
-
     @Value("${jwt.expiration}")
     private Long expiration;
 
@@ -27,8 +23,13 @@ public class JwtTokenService {
     @Value("${jwt.long.expiration}")
     private Long longExpiration;
 
+    private KeyService keyService;
 
-    public String generateToken(String username, String[] scopeList) {
+    public JwtTokenService(KeyService keyService) {
+        this.keyService = keyService;
+    }
+
+    public String createAccessToken(String username, String[] scopeList) {
         final Date createdDate = new Date();
         final Date expirationDate = calculateExpirationDate(createdDate);
 
@@ -37,26 +38,12 @@ public class JwtTokenService {
                 .setSubject(username)
                 .setIssuedAt(createdDate)
                 .setExpiration(expirationDate)
-                .signWith(SignatureAlgorithm.HS512, secret)
+                .signWith(SignatureAlgorithm.HS512, keyService.getPrivateKey())
                 .claim("scope", StringUtils.arrayToDelimitedString(scopeList,","))
                 .compact();
     }
 
-    public String generateApiToken(String username) {
-        final Date createdDate = new Date();
-        final Date expirationDate = calculateLongExpirationDate(createdDate);
-
-        return Jwts.builder()
-                .setClaims(new HashMap<>())
-                .setSubject(username)
-                .setIssuedAt(createdDate)
-                .setExpiration(expirationDate)
-                .signWith(SignatureAlgorithm.HS512, secret)
-                .claim("scope", SCOPE_API_ACCESS)
-                .compact();
-    }
-
-    public String generateShortLivingToken(String username) {
+    public String createAuthorizationToken(String username) {
         final Date createdDate = new Date();
         final Date expirationDate = calculateShortExpirationDate(createdDate);
 
@@ -65,7 +52,7 @@ public class JwtTokenService {
                 .setSubject(username)
                 .setIssuedAt(createdDate)
                 .setExpiration(expirationDate)
-                .signWith(SignatureAlgorithm.HS512, secret)
+                .signWith(SignatureAlgorithm.HS512, keyService.getPrivateKey())
                 .compact();
     }
 
@@ -95,13 +82,13 @@ public class JwtTokenService {
 
     private Claims getAllClaimsFromToken(String token) {
         return Jwts.parser()
-                .setSigningKey(secret)
+                .setSigningKey(keyService.getPublicKey())
                 .parseClaimsJws(token)
                 .getBody();
     }
 
     public boolean validateToken(String token) {
         Claims claims = getAllClaimsFromToken(token);
-        return  claims != null;
+        return claims != null;
     }
 }

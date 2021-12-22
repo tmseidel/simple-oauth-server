@@ -1,6 +1,7 @@
 package org.remus.simpleoauthserver.controller;
 
 import org.remus.simpleoauthserver.entity.Application;
+import org.remus.simpleoauthserver.flows.AuthorizationFlow;
 import org.remus.simpleoauthserver.request.LoginForm;
 import org.remus.simpleoauthserver.service.InvalidIpException;
 import org.remus.simpleoauthserver.service.LoginAttemptService;
@@ -44,11 +45,14 @@ public class LoginController {
 
     private final UserValidator userValidator;
 
+    private final AuthorizationFlow authFlow;
 
-    public LoginController(UserValidator userValidator, LoginService loginService, LoginAttemptService loginAttemptService) {
+
+    public LoginController(UserValidator userValidator, LoginService loginService, LoginAttemptService loginAttemptService, AuthorizationFlow authFlow) {
         this.userValidator = userValidator;
         this.loginService = loginService;
         this.loginAttemptService = loginAttemptService;
+        this.authFlow = authFlow;
     }
 
     @InitBinder
@@ -59,12 +63,13 @@ public class LoginController {
     @GetMapping("/authorize")
     public String authorize(@RequestParam(name="client_id") String clientId,
                             @RequestParam(name="scope") String scope,
-                            @RequestParam(name="response_type", defaultValue = "code") String responseType,
+                            @RequestParam(name="response_type") String responseType,
                             @RequestParam(name= STATE, required=false) String state,
                             @RequestParam(name= REDIRECT_URI) String redirect,
                             @RequestParam(name="response_mode", required=false) String query,
                             Model model, HttpSession session) {
-        Application application = loginService.getApplicationByIdAndRedirect(clientId, redirect);
+        authFlow.validateAuthorizationRequest(responseType,clientId,redirect,scope,state,query);
+        Application application = authFlow.findApplication(clientId, redirect);
         model.addAttribute("login", new LoginForm());
         model.addAttribute("appName", application.getName());
         model.addAttribute("appCss", application.getCssUrl());
@@ -88,9 +93,7 @@ public class LoginController {
         if (loginAttemptService.isBlocked(request.getRemoteAddr())) {
             throw new RuntimeException("This IP is blocked");
         }
-
-        logger.debug("Looking for application by clientId {} and redirect_uri {}", clientId, redirectUri);
-        Application application = loginService.getApplicationByIdAndRedirect(clientId, redirectUri);
+        Application application = authFlow.findApplication(clientId, redirectUri);
         if (!result.hasErrors()) {
 
             try {

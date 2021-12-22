@@ -3,9 +3,10 @@ package org.remus.simpleoauthserver.service;
 import org.remus.simpleoauthserver.entity.Organization;
 import org.remus.simpleoauthserver.entity.Scope;
 import org.remus.simpleoauthserver.entity.User;
-import org.remus.simpleoauthserver.repository.ScopeRepository;
 import org.remus.simpleoauthserver.repository.UserRepository;
 import org.remus.simpleoauthserver.security.ScopeRanking;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -17,6 +18,8 @@ import java.util.Set;
 
 @Service
 public class SetupService {
+
+    private final Logger logger = LoggerFactory.getLogger(this.getClass());
 
     @Value("${setup.secret}")
     private String setupSecret;
@@ -60,5 +63,6 @@ public class SetupService {
         entityManager.persist(organization);
         entityManager.persist(scope);
         entityManager.persist(user);
+        logger.info("Created new user {} with organization {}", user, organization);
     }
 }
