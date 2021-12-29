@@ -8,6 +8,7 @@ import io.restassured.http.Header;
 import io.restassured.path.json.mapper.factory.Jackson2ObjectMapperFactory;
 import io.restassured.response.ExtractableResponse;
 import io.restassured.response.Response;
+import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.TestInstance;
 import org.junit.jupiter.api.io.TempDir;
@@ -75,6 +76,12 @@ public abstract class BaseRest {
             acquireAccessToken();
             loadPublicKey();
         }
+    }
+
+    @AfterAll
+    public static void cleanup() {
+        clientId = null;
+        clientSecret = null;
     }
 
 
