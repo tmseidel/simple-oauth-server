@@ -9,7 +9,6 @@ import io.restassured.path.json.mapper.factory.Jackson2ObjectMapperFactory;
 import io.restassured.response.ExtractableResponse;
 import io.restassured.response.Response;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 import org.remus.simpleoauthserver.request.InitialApplicationRequest;
 import org.springframework.boot.web.server.LocalServerPort;
@@ -29,9 +28,11 @@ import static org.hamcrest.Matchers.notNullValue;
 
 public abstract class BaseRest {
 
-    public static final String BASE_URL = "http://localhost/";
+    public static final String BASE_URL = "http://localhost";
 
     public static final Header JSON = new Header("Content-Type", "application/json");
+
+    public static final Header URI_LIST = new Header("Content-Type","text/uri-list");
 
     public static final Header FORM_URLENCODED = new Header("Content-Type", "application/x-www-form-urlencoded");
 
@@ -110,6 +111,10 @@ public abstract class BaseRest {
 
     protected Header auth(String token) {
         return new Header("Authorization", "Bearer " + token);
+    }
+
+    protected String getBaseUrl() {
+        return RestAssured.baseURI + ":" + RestAssured.port;
     }
 
     protected void configureRestAssured(int port) {

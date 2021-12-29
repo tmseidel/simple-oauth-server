@@ -95,6 +95,7 @@ public class JPARestPermissionEvaluator implements PermissionEvaluator {
         if (o instanceof User) {
             boolean sameUser = user.getUser().getId().equals(((User) o).getId());
             boolean ownerOfUser = scopeRanking.isOrganizationOwner(scopes) && ((User) o).getOrganization().getId().equals(user.getUser().getOrganization().getId());
+            boolean userHasAdminScope = ((User) o).getScopeList().stream().anyMatch(e->ScopeRanking.SUPERADMIN_SCOPE.equals(e.getName()));
             // Restrictions if the user edit his own entity, no scopes, no organization
             boolean restrictionMet = true;
             if (sameUser) {
@@ -103,7 +104,7 @@ public class JPARestPermissionEvaluator implements PermissionEvaluator {
                 boolean activatedIdentical = ((User) o).isActivated() == ((User) o).isStoredActivated();
                 restrictionMet = scopeIdentical && organizationIdentical && activatedIdentical;
             }
-            returnValue = restrictionMet && (sameUser || ownerOfUser);
+            returnValue = !userHasAdminScope && restrictionMet && (sameUser || ownerOfUser);
         }
         return returnValue;
     }

@@ -2,6 +2,8 @@
 
 # Welcome to the simple-oauth-server project!
 
+Secure your APIs and provide Single-Sign-On with **simple-oauth-server**. It's the easiest way to secure web-applications with the popular OAuth Protocol.
+
 The goal of this project is to provide an OAuth Authentication & Authorization Backend for self-hosting. It's an alternative to the OAuth-Backends from big cloud-providers like AWS or Azure and the commercial ones like auth0.com.
 
 In addition it's way simpler than other OpenSource solutions like Keycloak achieved by keeping the features focussed on OAuth.
