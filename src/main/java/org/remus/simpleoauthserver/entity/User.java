@@ -1,6 +1,7 @@
 package org.remus.simpleoauthserver.entity;
 
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 import javax.persistence.Column;
@@ -13,8 +14,10 @@ import javax.persistence.JoinColumn;
 import javax.persistence.JoinTable;
 import javax.persistence.ManyToMany;
 import javax.persistence.ManyToOne;
+import javax.persistence.PostLoad;
 import javax.persistence.Temporal;
 import javax.persistence.TemporalType;
+import javax.persistence.Transient;
 import java.util.Date;
 import java.util.List;
 import java.util.Set;
@@ -56,6 +59,18 @@ public class User {
 
     @Temporal(TemporalType.TIMESTAMP)
     private Date created;
+
+    @JsonIgnore
+    @Transient
+    private Set<Scope> storedScopes;
+
+    @JsonIgnore
+    @Transient
+    private Organization storedOrganization;
+
+    @JsonIgnore
+    @Transient
+    private boolean storedActivated;
 
     public Integer getId() {
         return id;
@@ -137,5 +152,24 @@ public class User {
 
     public void setCreated(Date created) {
         this.created = created;
+    }
+
+    @PostLoad
+    public void postLoad() {
+        storedScopes = Set.copyOf(this.scopeList);
+        storedOrganization = organization;
+        storedActivated = activated;
+    }
+
+    public Set<Scope> getStoredScopes() {
+        return storedScopes;
+    }
+
+    public Organization getStoredOrganization() {
+        return storedOrganization;
+    }
+
+    public boolean isStoredActivated() {
+        return storedActivated;
     }
 }

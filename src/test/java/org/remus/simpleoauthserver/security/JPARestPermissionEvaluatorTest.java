@@ -28,11 +28,13 @@ class JPARestPermissionEvaluatorTest {
     public void setup() {
         organization = TestUtils.createOrganization(10);
         orgAdmin = createUser("Hans Dampf", "hans.dampf@example.org");
-        orgAdmin.setScopeList(Collections.singleton(TestUtils.createScope(ScopeRanking.ORGANIZATION_OWNER_SCOPE)));
+        orgAdmin.setScopeList(TestUtils.createScope(ScopeRanking.ORGANIZATION_OWNER_SCOPE));
         orgAdmin.setOrganization(organization);
         normalUser = createUser("John Doe", "john.doe@example.org");
-        normalUser.setScopeList(Collections.singleton(TestUtils.createScope("some.api.scope")));
+        normalUser.setScopeList(TestUtils.createScope("some.api.scope"));
         normalUser.setOrganization(organization);
+        orgAdmin.postLoad();
+        normalUser.postLoad();
         testee = new JPARestPermissionEvaluator();
     }
 
@@ -57,6 +59,36 @@ class JPARestPermissionEvaluatorTest {
         boolean hasPermission = testee.hasPermission(authentication, normalUser, JPARestPermissionEvaluator.WRITE);
 
         assertTrue(hasPermission);
+    }
+
+    @Test
+    void preventPrivilegeEscalationNormalUser() {
+        JWTUser jwtUser = new JWTUser(normalUser);
+        Authentication authentication = mock(Authentication.class);
+        when(authentication.getPrincipal()).thenReturn(jwtUser);
+        // the user tries to give itself an additional scope.
+        normalUser.getScopeList().addAll(TestUtils.createScope(ScopeRanking.SUPERADMIN_SCOPE));
+
+
+        boolean hasPermission = testee.hasPermission(authentication, normalUser, JPARestPermissionEvaluator.WRITE);
+
+        assertFalse(hasPermission);
+    }
+
+    @Test
+    void preventReactivationUser() {
+        normalUser.setActivated(false);
+        normalUser.postLoad();
+        JWTUser jwtUser = new JWTUser(normalUser);
+        Authentication authentication = mock(Authentication.class);
+        when(authentication.getPrincipal()).thenReturn(jwtUser);
+        // the user tries to reactivate hisself
+        normalUser.setActivated(true);
+
+
+        boolean hasPermission = testee.hasPermission(authentication, normalUser, JPARestPermissionEvaluator.WRITE);
+
+        assertFalse(hasPermission);
     }
 
     @Test

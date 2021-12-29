@@ -8,13 +8,17 @@ import org.remus.simpleoauthserver.entity.User;
 import org.remus.simpleoauthserver.security.ScopeRanking;
 
 import java.util.Collections;
+import java.util.HashSet;
+import java.util.Set;
 
 public class TestUtils {
 
-    public static Scope createScope(String name) {
+    public static Set<Scope> createScope(String name) {
+        HashSet<Scope> scopes = new HashSet<>();
         Scope scope = new Scope();
         scope.setName(name);
-        return scope;
+        scopes.add(scope);
+        return scopes;
     }
 
     public static Organization createOrganization(int id) {

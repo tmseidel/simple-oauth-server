@@ -93,12 +93,17 @@ public class JPARestPermissionEvaluator implements PermissionEvaluator {
 
     protected boolean checkUser(JWTUser user, Set<String> scopes, Object o, boolean returnValue) {
         if (o instanceof User) {
-            boolean allowed = scopeRanking.isOrganizationOwner(scopes);
-            // The user has only the right to see his user from the same organization
-            returnValue = allowed;
-            if (allowed) {
-                returnValue = user.getUser().getId().equals(((User) o).getId()) || ((User) o).getOrganization().getId().equals(user.getUser().getOrganization().getId());
+            boolean sameUser = user.getUser().getId().equals(((User) o).getId());
+            boolean ownerOfUser = scopeRanking.isOrganizationOwner(scopes) && ((User) o).getOrganization().getId().equals(user.getUser().getOrganization().getId());
+            // Restrictions if the user edit his own entity, no scopes, no organization
+            boolean restrictionMet = true;
+            if (sameUser) {
+                boolean scopeIdentical = ((User) o).getScopeList().equals(((User) o).getStoredScopes());
+                boolean organizationIdentical = ((User) o).getOrganization().equals(((User) o).getStoredOrganization());
+                boolean activatedIdentical = ((User) o).isActivated() == ((User) o).isStoredActivated();
+                restrictionMet = scopeIdentical && organizationIdentical && activatedIdentical;
             }
+            returnValue = restrictionMet && (sameUser || ownerOfUser);
         }
         return returnValue;
     }
