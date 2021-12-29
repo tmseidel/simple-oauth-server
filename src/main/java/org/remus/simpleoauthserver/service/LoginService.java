@@ -16,6 +16,8 @@ import java.util.Set;
 import java.util.regex.PatternSyntaxException;
 import java.util.stream.Collectors;
 
+import static org.owasp.encoder.Encode.forJava;
+
 @Service
 public class LoginService {
 
@@ -36,27 +38,25 @@ public class LoginService {
     public void checkUser(String username, String password, String clientId, String ipAdress) {
         Optional<User> user = userRepository.findOneByEmail(username);
         User foundUser = user.orElseThrow(() -> new UserNotFoundException("Error checking user, Either passowrd, username or client-id does not match."));
-        LOGGER.debug("checkUser() called with: username = [{}], clientId = [{}], ipAdress = [{}]",username,clientId,ipAdress);
+        LOGGER.debug("checkUser() called with: username = [{}], clientId = [{}], ipAdress = [{}]", forJava(username), forJava(clientId), forJava(ipAdress));
         if (!StringUtils.isEmpty(foundUser.getOrganization().getIpRestriction())) {
             try {
                 if (!ipAdress.matches(foundUser.getOrganization().getIpRestriction())) {
-                    throw new InvalidIpException(MessageFormat.format("The ip {0} doesn''t match the given ip-restriction {1}",ipAdress,foundUser.getOrganization().getIpRestriction()));
+                    throw new InvalidIpException(MessageFormat.format("The ip {0} doesn''t match the given ip-restriction {1}", forJava(ipAdress), foundUser.getOrganization().getIpRestriction()));
                 }
             } catch (PatternSyntaxException e) {
-                throw new InvalidIpException(MessageFormat.format("The pattern {1} doesn''t compile for user {0}",foundUser.getId(),foundUser.getOrganization().getIpRestriction()));
+                throw new InvalidIpException(MessageFormat.format("The pattern {1} doesn''t compile for user {0}", foundUser.getId(), foundUser.getOrganization().getIpRestriction()));
             }
         }
         if (!foundUser.isActivated()) {
             throw new UserLockedException(MessageFormat.format("The user {0} is locked. Exiting", foundUser.getEmail()));
         }
-        if (passwordEncoder.matches(password,foundUser.getPassword())) {
-
+        if (passwordEncoder.matches(password, foundUser.getPassword())) {
             Optional<Application> application = user.flatMap(f -> f.getApplications().stream().filter(e -> clientId.equals(e.getClientId()) && e.isActivated()).findAny());
             if (application.isPresent()) {
                 return;
             }
         }
-
         throw new UserNotFoundException("Error checking user, Either password, username or client-id does not match.");
 
     }
@@ -67,7 +67,7 @@ public class LoginService {
         Set<String> stringSet = foundUser.getScopeList().stream().map(Scope::getName).collect(Collectors.toSet());
         for (String scope : scopes) {
             if (!stringSet.contains(scope)) {
-                throw new ScopeNotFoundException("The requested scope " + scope+ " was not found for user " + username);
+                throw new ScopeNotFoundException("The requested scope " + scope + " was not found for user " + username);
             }
         }
     }

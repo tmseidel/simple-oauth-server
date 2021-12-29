@@ -19,6 +19,12 @@ import javax.inject.Inject;
 @Configuration
 @EnableWebSecurity
 public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
+    public static final String AUTH_ADMIN_DATA = "/auth/admin/data/**";
+    public static final String AUTH_FIRST_START = "/auth/firstStart/**";
+    public static final String AUTH_OAUTH = "/auth/oauth/**";
+    public static final String AUTH_CSS = "/auth/css/**";
+    public static final String AUTH_API = "/auth/api/**";
+    public static final String AUTH_ERRORS = "/auth/errors/**";
     @Inject
     private JwtAuthorizationTokenFilter filter;
 
@@ -26,26 +32,26 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
     protected void configure(HttpSecurity http) throws Exception {
 
 
-        http.csrf().ignoringAntMatchers("/auth/admin/data/**","/auth/firstStart/**","/auth/oauth/token").and()
+        http.csrf().ignoringAntMatchers(AUTH_ADMIN_DATA, AUTH_FIRST_START,"/auth/oauth/token").and()
                 .cors()
                 .and()
                 .exceptionHandling().authenticationEntryPoint(new HttpStatusEntryPoint(HttpStatus.UNAUTHORIZED))
                 .and()
                 .sessionManagement().sessionCreationPolicy(SessionCreationPolicy.STATELESS).and()
                 .authorizeRequests()
-                .antMatchers(HttpMethod.GET,"/auth/css/**").permitAll()
-                .antMatchers(HttpMethod.GET,"/auth/oauth/**").permitAll()
-                .antMatchers(HttpMethod.POST,"/auth/oauth/**").permitAll()
-                .antMatchers(HttpMethod.GET,"/auth/firstStart/**").permitAll()
-                .antMatchers(HttpMethod.POST,"/auth/firstStart/**").permitAll()
-                .antMatchers(HttpMethod.POST,"/auth/api/**").authenticated()
+                .antMatchers(HttpMethod.GET, AUTH_CSS).permitAll()
+                .antMatchers(HttpMethod.GET, AUTH_OAUTH).permitAll()
+                .antMatchers(HttpMethod.POST, AUTH_OAUTH).permitAll()
+                .antMatchers(HttpMethod.GET, AUTH_FIRST_START).permitAll()
+                .antMatchers(HttpMethod.POST, AUTH_FIRST_START).permitAll()
+                .antMatchers(HttpMethod.POST, AUTH_API).authenticated()
                 .antMatchers(HttpMethod.OPTIONS).permitAll()
-                .antMatchers(HttpMethod.GET, "/auth/admin/data/**").hasAnyAuthority(ScopeRanking.SUPERADMIN_SCOPE, ScopeRanking.ORGANIZATION_OWNER_SCOPE)
-                .antMatchers(HttpMethod.POST, "/auth/admin/data/**").hasAnyAuthority(ScopeRanking.SUPERADMIN_SCOPE, ScopeRanking.ORGANIZATION_OWNER_SCOPE)
-                .antMatchers(HttpMethod.PUT, "/auth/admin/data/**").hasAnyAuthority(ScopeRanking.SUPERADMIN_SCOPE, ScopeRanking.ORGANIZATION_OWNER_SCOPE)
-                .antMatchers(HttpMethod.DELETE, "/auth/admin/data/**").hasAnyAuthority(ScopeRanking.SUPERADMIN_SCOPE, ScopeRanking.ORGANIZATION_OWNER_SCOPE)
-                .antMatchers(HttpMethod.PATCH, "/auth/admin/data/**").hasAnyAuthority(ScopeRanking.SUPERADMIN_SCOPE, ScopeRanking.ORGANIZATION_OWNER_SCOPE)
-                .antMatchers(HttpMethod.GET, "/auth/errors/**").permitAll()
+                .antMatchers(HttpMethod.GET, AUTH_ADMIN_DATA).hasAnyAuthority(ScopeRanking.SUPERADMIN_SCOPE, ScopeRanking.ORGANIZATION_OWNER_SCOPE)
+                .antMatchers(HttpMethod.POST, AUTH_ADMIN_DATA).hasAnyAuthority(ScopeRanking.SUPERADMIN_SCOPE, ScopeRanking.ORGANIZATION_OWNER_SCOPE)
+                .antMatchers(HttpMethod.PUT, AUTH_ADMIN_DATA).hasAnyAuthority(ScopeRanking.SUPERADMIN_SCOPE, ScopeRanking.ORGANIZATION_OWNER_SCOPE)
+                .antMatchers(HttpMethod.DELETE, AUTH_ADMIN_DATA).hasAnyAuthority(ScopeRanking.SUPERADMIN_SCOPE, ScopeRanking.ORGANIZATION_OWNER_SCOPE)
+                .antMatchers(HttpMethod.PATCH, AUTH_ADMIN_DATA).hasAnyAuthority(ScopeRanking.SUPERADMIN_SCOPE, ScopeRanking.ORGANIZATION_OWNER_SCOPE)
+                .antMatchers(HttpMethod.GET, AUTH_ERRORS).permitAll()
                 .anyRequest().authenticated();
 
         http.addFilterBefore(filter, UsernamePasswordAuthenticationFilter.class);

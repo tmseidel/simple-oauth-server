@@ -12,7 +12,7 @@ import java.util.stream.Collectors;
 public class JWTUser implements UserDetails {
 
         private final Set<SimpleGrantedAuthority> authorities;
-        private User user;
+        private transient User user;
 
         public JWTUser(User user) {
             this.user = user;

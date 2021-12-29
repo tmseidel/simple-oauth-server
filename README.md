@@ -1,3 +1,5 @@
+[![Quality Gate Status](https://sonarcloud.io/api/project_badges/measure?project=tmseidel_simple-oauth-server&metric=alert_status)](https://sonarcloud.io/summary/new_code?id=tmseidel_simple-oauth-server)
+
 # Welcome to the simple-oauth-server project!
 
 The goal of this project is to provide an OAuth Authentication & Authorization Backend for self-hosting. It's an alternative to the OAuth-Backends from big cloud-providers like AWS or Azure and the commercial ones like auth0.com.
@@ -23,13 +25,20 @@ In addition it's way simpler than other OpenSource solutions like Keycloak achie
 * Customizable Login Page
 * Full Configuration via REST-Interface
 
+## Support & Discussion
+* Join our [Google Group](https://groups.google.com/g/simple-oauth-server)
+
 ## Roadmap
 ### 0.1
 * Client Credential Flow
-* Authorization Flow
-
+* Rest-Client for full control of the configuration
 ### 0.2
+* Authorization Flow
+* Hybrid Flow
+* Customizable Login-Pages
+### 0.3
 * Device Authorization Flow
+
 
  
 

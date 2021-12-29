@@ -38,38 +38,23 @@ public class JPARestPermissionEvaluator implements PermissionEvaluator {
 
         JWTUser user = (JWTUser) auth.getPrincipal();
         if (logger.isDebugEnabled()) {
-            logger.debug("hasPermission: User {} with permission {} on object {}",user.getUser(),permission,targetDomainObject);
+            logger.debug("hasPermission: User {} with permission {} on object {}", user.getUser(), permission, targetDomainObject);
         }
         Set<String> scopes = user.getAuthorities().stream().map(e -> ((GrantedAuthority) e).getAuthority()).collect(Collectors.toSet());
         if (scopeRanking.isSuperAdmin(scopes)) {
             // If the user has the data-admin
             return true;
         }
-        Iterable iterable = extractTargetObject(targetDomainObject);
+        Iterable<?> iterable = extractTargetObject(targetDomainObject);
         for (Object o : iterable) {
             boolean returnValue = true;
             if (o == null) {
                 returnValue = false;
             }
-            if (o instanceof User) {
-
-                boolean allowed = scopeRanking.isOrganizationOwner(scopes);
-
-                // The user has only the right to see his user from the same organization, excepting deleteing the user...
-                returnValue = allowed;
-                if (allowed) {
-                    returnValue = user.getUser().getId().equals(((User) o).getId()) || ((User) o).getOrganization().getId().equals(user.getUser().getOrganization().getId());
-                }
-            }
-            if (o instanceof Organization) {
-                returnValue = scopeRanking.isOrganizationOwner(scopes) && user.getUser().getOrganization().getId().equals(((Organization) o).getId());
-            }
-            if (o instanceof Scope) {
-                returnValue =  READ.equals(permission);
-            }
-            if (o instanceof Application) {
-                returnValue =  READ.equals(permission);
-            }
+            returnValue = checkUser(user, scopes, o, returnValue);
+            returnValue = checkOrganization(user, scopes, o, returnValue);
+            returnValue = checkScope(permission, o, returnValue);
+            returnValue = checkApplication(permission, o, returnValue);
             if (!returnValue) {
                 logger.warn("Permission denied for {} on {} with user {}", o, permission, user);
                 return false;
@@ -78,7 +63,47 @@ public class JPARestPermissionEvaluator implements PermissionEvaluator {
         return true;
     }
 
-    private Iterable extractTargetObject(Object source) {
+    protected boolean checkApplication(Object permission, Object o, boolean returnValue) {
+        if (o instanceof Application) {
+            returnValue = READ.equals(permission);
+        }
+        return returnValue;
+    }
+
+    /**
+     * Scopes can only be edited by {@link ScopeRanking#SUPERADMIN_SCOPE}.
+     * @param permission
+     * @param o
+     * @param returnValue
+     * @return
+     */
+    protected boolean checkScope(Object permission, Object o, boolean returnValue) {
+        if (o instanceof Scope) {
+            returnValue = READ.equals(permission);
+        }
+        return returnValue;
+    }
+
+    protected boolean checkOrganization(JWTUser user, Set<String> scopes, Object o, boolean returnValue) {
+        if (o instanceof Organization) {
+            returnValue = scopeRanking.isOrganizationOwner(scopes) && user.getUser().getOrganization().getId().equals(((Organization) o).getId());
+        }
+        return returnValue;
+    }
+
+    protected boolean checkUser(JWTUser user, Set<String> scopes, Object o, boolean returnValue) {
+        if (o instanceof User) {
+            boolean allowed = scopeRanking.isOrganizationOwner(scopes);
+            // The user has only the right to see his user from the same organization
+            returnValue = allowed;
+            if (allowed) {
+                returnValue = user.getUser().getId().equals(((User) o).getId()) || ((User) o).getOrganization().getId().equals(user.getUser().getOrganization().getId());
+            }
+        }
+        return returnValue;
+    }
+
+    private Iterable<?> extractTargetObject(Object source) {
         if (source instanceof Iterable) {
             return (Iterable) source;
         } else if (source instanceof Optional) {
@@ -100,10 +125,9 @@ public class JPARestPermissionEvaluator implements PermissionEvaluator {
 
     private boolean hasPrivilege(Authentication auth, String targetType, String permission) {
         for (GrantedAuthority grantedAuth : auth.getAuthorities()) {
-            if (grantedAuth.getAuthority().startsWith(targetType)) {
-                if (grantedAuth.getAuthority().contains(permission)) {
-                    return true;
-                }
+            if (grantedAuth.getAuthority().startsWith(targetType)
+                    && grantedAuth.getAuthority().contains(permission)) {
+                return true;
             }
         }
         return false;
