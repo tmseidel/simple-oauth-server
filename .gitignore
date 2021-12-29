@@ -31,5 +31,4 @@ build/
 
 ### VS Code ###
 .vscode/
-/keys/simpleoauth2.key
-/keys/simpleoauth2.pub
+/data/**

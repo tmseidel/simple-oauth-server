@@ -1,6 +1,9 @@
 package org.remus.simpleoauthserver.security;
 
 import io.jsonwebtoken.ExpiredJwtException;
+import org.remus.simpleoauthserver.Configuration;
+import org.remus.simpleoauthserver.entity.ApplicationType;
+import org.remus.simpleoauthserver.response.TokenType;
 import org.remus.simpleoauthserver.service.JwtTokenService;
 import org.remus.simpleoauthserver.service.TokenBinService;
 import org.slf4j.Logger;
@@ -21,6 +24,7 @@ import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
+import java.util.List;
 
 @Component
 public class JwtAuthorizationTokenFilter extends OncePerRequestFilter {
@@ -28,16 +32,23 @@ public class JwtAuthorizationTokenFilter extends OncePerRequestFilter {
     private final Logger logger = LoggerFactory.getLogger(this.getClass());
 
     private final JwtTokenService jwtTokenUtil;
+
     @Value("${jwt.header}")
     private String tokenHeader;
 
-    private final UserDetailsService userDetailsService;
+    private final UserDetailsService appBasedDetailService;
+
+    private final UserDetailsService userBasedDetailService;
 
     private final TokenBinService tokenBinService;
 
-    public JwtAuthorizationTokenFilter(JwtTokenService jwtTokenUtil, @Named("jwtuserdetailservice") UserDetailsService userDetailsService, TokenBinService tokenBinService) {
+    public JwtAuthorizationTokenFilter(JwtTokenService jwtTokenUtil,
+                                       @Named(Configuration.BEAN_NAME_USERBASED_DETAILSERVICE) UserDetailsService userDetailsService,
+                                       @Named(Configuration.BEAN_NAME_APPBASED_DETAILSERVICE) UserDetailsService appbasedDetailService,
+                                       TokenBinService tokenBinService) {
         this.jwtTokenUtil = jwtTokenUtil;
-        this.userDetailsService = userDetailsService;
+        this.userBasedDetailService = userDetailsService;
+        this.appBasedDetailService = appbasedDetailService;
         this.tokenBinService = tokenBinService;
     }
 
@@ -49,11 +60,20 @@ public class JwtAuthorizationTokenFilter extends OncePerRequestFilter {
         final String requestHeader = request.getHeader(this.tokenHeader);
 
         String username = null;
+        ApplicationType applicationType = null;
         String authToken = null;
         if (requestHeader != null && requestHeader.startsWith("Bearer ")) {
             authToken = requestHeader.substring(7);
             try {
-                username = jwtTokenUtil.getUsernameFromToken(authToken);
+                String[] claims = jwtTokenUtil.getClaimFromToken(authToken,(e) -> {
+                    String[] returnValue = new String[2];
+                    returnValue[0] = e.getSubject();
+                    returnValue[1] = e.get("type",String.class);
+                    return returnValue;
+                });
+                username = claims[0];
+                applicationType = ApplicationType.valueOf(claims[1]);
+
             } catch (IllegalArgumentException e) {
                 logger.error("an error occurred during getting username from token", e);
             } catch (ExpiredJwtException e) {
@@ -66,19 +86,22 @@ public class JwtAuthorizationTokenFilter extends OncePerRequestFilter {
         logger.debug("checking authentication for user '{}'", username);
         if (username != null && SecurityContextHolder.getContext().getAuthentication() == null) {
             logger.debug("security context was null, so authorizing user");
-
-            // It is not compelling necessary to load the use details from the database. You could also store the information
-            // in the token and read it from it. It's up to you ;)
             UserDetails userDetails;
             try {
-                userDetails = userDetailsService.loadUserByUsername(username);
+                switch (applicationType) {
+                    case M2M:
+                        userDetails = appBasedDetailService.loadUserByUsername(username);
+                        break;
+                    case REGULAR:
+                        userDetails = userBasedDetailService.loadUserByUsername(username);
+                        break;
+                    default:
+                        throw new IllegalStateException("Unexpected value: " + applicationType);
+                }
+                
             } catch (UsernameNotFoundException e) {
                 return;
             }  
-
-
-            // For simple validation it is completely sufficient to just check the token integrity. You don't have to call
-            // the database compellingly. Again it's up to you ;)
             if (jwtTokenUtil.validateToken(authToken) && !tokenBinService.isTokenInvalidated(authToken)) {
                 UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(userDetails, null, userDetails.getAuthorities());
                 authentication.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));

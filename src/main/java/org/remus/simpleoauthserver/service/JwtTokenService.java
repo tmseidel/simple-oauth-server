@@ -3,9 +3,9 @@ package org.remus.simpleoauthserver.service;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
+import org.remus.simpleoauthserver.entity.ApplicationType;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
-import org.springframework.util.StringUtils;
 
 import java.util.Date;
 import java.util.HashMap;
@@ -29,17 +29,18 @@ public class JwtTokenService {
         this.keyService = keyService;
     }
 
-    public String createAccessToken(String username, String[] scopeList) {
+    public String createAccessToken(String subject, ApplicationType type, String[] scopeList) {
         final Date createdDate = new Date();
         final Date expirationDate = calculateExpirationDate(createdDate);
 
         return Jwts.builder()
                 .setClaims(new HashMap<>())
-                .setSubject(username)
+                .setSubject(subject)
                 .setIssuedAt(createdDate)
                 .setExpiration(expirationDate)
-                .signWith(SignatureAlgorithm.HS512, keyService.getPrivateKey())
-                .claim("scope", StringUtils.arrayToDelimitedString(scopeList,","))
+                .signWith(SignatureAlgorithm.RS256, keyService.getPrivateKey())
+                .claim("scope", String.join(",",scopeList))
+                .claim("type", type)
                 .compact();
     }
 
@@ -52,7 +53,7 @@ public class JwtTokenService {
                 .setSubject(username)
                 .setIssuedAt(createdDate)
                 .setExpiration(expirationDate)
-                .signWith(SignatureAlgorithm.HS512, keyService.getPrivateKey())
+                .signWith(SignatureAlgorithm.RS256, keyService.getPrivateKey())
                 .compact();
     }
 

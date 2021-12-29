@@ -18,6 +18,8 @@ public class CorsConfigurator {
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         final CorsConfiguration configuration = new CorsConfiguration();
+
+
         configuration.setAllowedOrigins(asList(allowedOrigins));
         configuration.setAllowedMethods(asList("HEAD",
                 "GET", "POST", "PUT", "DELETE", "PATCH"));
@@ -28,7 +30,9 @@ public class CorsConfigurator {
         // will fail with 403 Invalid CORS request
         configuration.setAllowedHeaders(asList("Authorization", "Cache-Control", "Content-Type"));
         final UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
+
         source.registerCorsConfiguration("/**", configuration);
+
         return source;
     }
 }

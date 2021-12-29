@@ -21,6 +21,10 @@ import java.util.Map;
 @org.springframework.context.annotation.Configuration
 public class Configuration {
 
+    public static final String BEAN_NAME_USERBASED_DETAILSERVICE = "userbaseddetailservice";
+    public static final String BEAN_NAME_APPBASED_DETAILSERVICE = "appbaseddetailservice";
+
+
     @Bean
     public RestTemplate restTemplate() {
         return new RestTemplate();

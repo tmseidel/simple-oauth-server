@@ -1,4 +1,4 @@
-package org.remus.simpleoauthserver.systemtests;
+package org.remus.simpleoauthserver.integrationtest;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.restassured.RestAssured;
@@ -74,7 +74,7 @@ public abstract class BaseRest {
         }
     }
 
-    @Test
+
     void acquireAccessToken() {
         String tokenRequestUrl = "/auth/oauth/token";
 

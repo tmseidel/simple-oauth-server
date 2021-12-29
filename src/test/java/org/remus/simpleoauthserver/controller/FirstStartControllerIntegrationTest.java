@@ -5,13 +5,15 @@ import org.junit.jupiter.api.Order;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestMethodOrder;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.remus.simpleoauthserver.entity.Application;
 import org.remus.simpleoauthserver.entity.User;
+import org.remus.simpleoauthserver.repository.ApplicationRepository;
 import org.remus.simpleoauthserver.repository.UserRepository;
-import org.remus.simpleoauthserver.request.CreateSuperAdminRequest;
+import org.remus.simpleoauthserver.request.InitialApplicationRequest;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
-import org.springframework.test.context.junit4.SpringRunner;
 import org.springframework.web.server.ResponseStatusException;
 
 import javax.inject.Inject;
@@ -31,12 +33,12 @@ class FirstStartControllerIntegrationTest {
     private FirstStartController testee;
 
     @Inject
-    private UserRepository userRepository;
+    private ApplicationRepository applicationRepository;
 
     @Test
     @Order(1)
     void runWithInvalidPassword() {
-        CreateSuperAdminRequest request = createValidRequest();
+        InitialApplicationRequest request = createValidRequest();
         // invalidate the token
         request.setInitialAuthToken("wrongToken");
 
@@ -46,30 +48,26 @@ class FirstStartControllerIntegrationTest {
     @Test
     @Order(2)
     void runHappyPath() throws NoSuchAlgorithmException, IOException {
-        CreateSuperAdminRequest request = createValidRequest();
+        InitialApplicationRequest request = createValidRequest();
 
         testee.run(request);
 
-        User user = userRepository.findAllSuperAdmins().iterator().next();
-        assertEquals("John Doe", user.getName());
-        assertEquals("ich@junit.de", user.getEmail());
+        Application application = applicationRepository.findAllApplicationWithSuperAdminScope().iterator().next();
+
+        assertNotNull(application);
     }
 
     @Test
     @Order(3)
     void runAfterHappyPath() {
-        CreateSuperAdminRequest request = createValidRequest();
+        InitialApplicationRequest request = createValidRequest();
 
         assertThrows(ResponseStatusException.class,() -> testee.run(request),"Expected a 401");
     }
 
-    private CreateSuperAdminRequest createValidRequest() {
-        CreateSuperAdminRequest request = new CreateSuperAdminRequest();
-        request.setOrganization("MyTest");
+    private InitialApplicationRequest createValidRequest() {
+        InitialApplicationRequest request = new InitialApplicationRequest();
         request.setInitialAuthToken("testToken");
-        request.setSuperAdminEmail("ich@junit.de");
-        request.setSuperAdminPassword("******");
-        request.setSuperAdminName("John Doe");
         return request;
     }
 }

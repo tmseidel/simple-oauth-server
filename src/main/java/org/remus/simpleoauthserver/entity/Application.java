@@ -5,10 +5,15 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import javax.persistence.Column;
 import javax.persistence.ElementCollection;
 import javax.persistence.Entity;
+import javax.persistence.EnumType;
+import javax.persistence.Enumerated;
 import javax.persistence.FetchType;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
+import javax.persistence.JoinColumn;
+import javax.persistence.JoinTable;
+import javax.persistence.ManyToMany;
 import java.util.Set;
 
 @Entity
@@ -35,6 +40,16 @@ public class Application {
     @Column(unique = true, nullable = false)
     @JsonProperty(access = JsonProperty.Access.WRITE_ONLY)
     private String clientSecret;
+
+    @ManyToMany(fetch = FetchType.EAGER)
+    @JoinTable(
+            name = "application_scope",
+            joinColumns = @JoinColumn(name = "application_id"),
+            inverseJoinColumns = @JoinColumn(name = "scope_id"))
+    private Set<Scope> scopeList;
+
+    @Enumerated(EnumType.STRING)
+    private ApplicationType applicationType;
 
     public Integer getId() {
         return id;
@@ -98,5 +113,21 @@ public class Application {
 
     public void setClientSecret(String clientSecret) {
         this.clientSecret = clientSecret;
+    }
+
+    public Set<Scope> getScopeList() {
+        return scopeList;
+    }
+
+    public void setScopeList(Set<Scope> scopeList) {
+        this.scopeList = scopeList;
+    }
+
+    public ApplicationType getApplicationType() {
+        return applicationType;
+    }
+
+    public void setApplicationType(ApplicationType applicationType) {
+        this.applicationType = applicationType;
     }
 }

@@ -1,6 +1,8 @@
 package org.remus.simpleoauthserver.repository;
 
 import org.remus.simpleoauthserver.entity.Application;
+import org.remus.simpleoauthserver.entity.User;
+import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.CrudRepository;
 import org.springframework.security.access.prepost.PostAuthorize;
 import org.springframework.security.access.prepost.PostFilter;
@@ -11,7 +13,12 @@ import java.util.Optional;
 public interface ApplicationRepository extends CrudRepository<Application,Integer> {
     Optional<Application> findOneByClientIdAndActivated(String clientId, boolean activated);
 
-    Application findApplicationByClientId(String clientId);
+    Optional<Application> findApplicationByClientIdAndClientSecretAndActivated(String clientId, String clientSecret, boolean activated);
+
+    Optional<Application> findApplicationByClientId(String clientId);
+
+    @Query("SELECT a FROM Application as a INNER JOIN a.scopeList s WHERE s.name = org.remus.simpleoauthserver.security.ScopeRanking.SUPERADMIN_SCOPE")
+    Iterable<Application> findAllApplicationWithSuperAdminScope();
 
     @Override
     @PreAuthorize("hasPermission(#s, 'write')")

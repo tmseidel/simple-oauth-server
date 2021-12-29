@@ -7,7 +7,9 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.remus.simpleoauthserver.entity.Application;
 import org.remus.simpleoauthserver.entity.User;
+import org.remus.simpleoauthserver.repository.ApplicationRepository;
 import org.remus.simpleoauthserver.repository.ScopeRepository;
 import org.remus.simpleoauthserver.repository.UserRepository;
 import org.springframework.test.util.ReflectionTestUtils;
@@ -25,13 +27,7 @@ import static org.mockito.Mockito.when;
 class SetupServiceTest {
 
     @Mock
-    private UserRepository userRepository;
-
-    @Mock
-    private ScopeRepository scopeRepository;
-
-    @Mock
-    private EntityManager entityManager;
+    private ApplicationRepository applicationRepository;
 
     @InjectMocks
     private SetupService testee;
@@ -43,7 +39,7 @@ class SetupServiceTest {
 
     @Test
     void canCreateInitialSuperAdmin() {
-        lenient().when(userRepository.findAllSuperAdmins()).thenReturn(IterableUtil.iterable());
+        lenient().when(applicationRepository.findAllApplicationWithSuperAdminScope()).thenReturn(IterableUtil.iterable());
 
         boolean result = testee.canCreateInitialSuperAdmin("myToken");
 
@@ -52,7 +48,7 @@ class SetupServiceTest {
 
     @Test
     void canCreateInitialSuperAdminWrongPassword() {
-        lenient().when(userRepository.findAllSuperAdmins()).thenReturn(IterableUtil.iterable());
+        lenient().when(applicationRepository.findAllApplicationWithSuperAdminScope()).thenReturn(IterableUtil.iterable());
 
         boolean result = testee.canCreateInitialSuperAdmin("wrong");
 
@@ -61,7 +57,7 @@ class SetupServiceTest {
 
     @Test
     void canCreateInitialSuperAdminAlreadyExists() {
-        lenient().when(userRepository.findAllSuperAdmins()).thenReturn(IterableUtil.iterable(mock(User.class)));
+        lenient().when(applicationRepository.findAllApplicationWithSuperAdminScope()).thenReturn(IterableUtil.iterable(mock(Application.class)));
 
         boolean result = testee.canCreateInitialSuperAdmin("myToken");
 

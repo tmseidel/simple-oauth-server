@@ -1,6 +1,6 @@
 package org.remus.simpleoauthserver.request;
 
-public class CreateSuperAdminRequest {
+public class InitialApplicationRequest {
 
     public String getInitialAuthToken() {
         return initialAuthToken;

@@ -29,8 +29,8 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpSession;
 
 @Controller
-@RequestMapping(path = "/auth/oauth2")
-public class LoginController {
+@RequestMapping(path = "/auth/oauth")
+public class AuthorizationEndpoint {
 
 
     public static final String STATE = "state";
@@ -48,7 +48,7 @@ public class LoginController {
     private final AuthorizationFlow authFlow;
 
 
-    public LoginController(UserValidator userValidator, LoginService loginService, LoginAttemptService loginAttemptService, AuthorizationFlow authFlow) {
+    public AuthorizationEndpoint(UserValidator userValidator, LoginService loginService, LoginAttemptService loginAttemptService, AuthorizationFlow authFlow) {
         this.userValidator = userValidator;
         this.loginService = loginService;
         this.loginAttemptService = loginAttemptService;
