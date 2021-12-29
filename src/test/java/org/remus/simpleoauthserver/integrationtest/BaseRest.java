@@ -9,6 +9,7 @@ import io.restassured.path.json.mapper.factory.Jackson2ObjectMapperFactory;
 import io.restassured.response.ExtractableResponse;
 import io.restassured.response.Response;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.TestInstance;
 import org.junit.jupiter.api.io.TempDir;
 import org.remus.simpleoauthserver.request.InitialApplicationRequest;
 import org.springframework.boot.web.server.LocalServerPort;
@@ -39,19 +40,20 @@ public abstract class BaseRest {
     @LocalServerPort
     private int port;
 
-    protected String clientId;
 
-    protected String clientSecret;
+    protected static String clientId;
 
-    protected PublicKey publicKey;
+    protected static String clientSecret;
 
-    private Path pubKey;
+    protected static PublicKey publicKey;
 
-    protected String accessToken;
+    private static Path pubKey;
+
+    protected static String accessToken;
 
     @BeforeEach
     void createInitialApplicationAndDownloadPubKey(@TempDir Path tempDir) throws Exception {
-        if (clientId != null || clientSecret == null) {
+        if (clientId == null || clientSecret == null) {
             configureRestAssured(port);
             String firstStartUrl = "/auth/firstStart/run";
             String downloadPubUrl = "/auth/firstStart/pub";
