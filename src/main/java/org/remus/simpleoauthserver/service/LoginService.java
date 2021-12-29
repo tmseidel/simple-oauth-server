@@ -1,16 +1,14 @@
 package org.remus.simpleoauthserver.service;
 
+import org.apache.commons.lang3.StringUtils;
 import org.remus.simpleoauthserver.entity.Application;
 import org.remus.simpleoauthserver.entity.Scope;
 import org.remus.simpleoauthserver.entity.User;
-import org.remus.simpleoauthserver.repository.ApplicationRepository;
 import org.remus.simpleoauthserver.repository.UserRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
-import org.springframework.util.StringUtils;
 
 import java.text.MessageFormat;
 import java.util.Optional;
@@ -25,36 +23,35 @@ public class LoginService {
 
     private final PasswordEncoder passwordEncoder;
 
-    public ApplicationRepository applicationRepository;
+    private JwtTokenService tokenService;
 
     private static final Logger LOGGER = LoggerFactory.getLogger(LoginService.class);
 
-    public LoginService(ApplicationRepository applicationRepository, UserRepository userRepository, PasswordEncoder passwordEncoder) {
-        this.applicationRepository = applicationRepository;
+    public LoginService(UserRepository userRepository, PasswordEncoder passwordEncoder, JwtTokenService tokenService) {
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
+        this.tokenService = tokenService;
     }
-
-
 
     public void checkUser(String username, String password, String clientId, String ipAdress) {
         Optional<User> user = userRepository.findOneByEmail(username);
         User foundUser = user.orElseThrow(() -> new UserNotFoundException("Error checking user, Either passowrd, username or client-id does not match."));
-        LOGGER.debug("checkUser() called with: username = [" + username + "], password = [" + password + "], clientId = [" + clientId + "], ipAdress = [" + ipAdress + "]");
+        LOGGER.debug("checkUser() called with: username = [{}], clientId = [{}], ipAdress = [{}]",username,clientId,ipAdress);
         if (!StringUtils.isEmpty(foundUser.getOrganization().getIpRestriction())) {
             try {
                 if (!ipAdress.matches(foundUser.getOrganization().getIpRestriction())) {
-                    throw new InvalidIpException(MessageFormat.format("The ip {0} doesn't match the given ip-restriction {1}",ipAdress,foundUser.getOrganization().getIpRestriction()));
+                    throw new InvalidIpException(MessageFormat.format("The ip {0} doesn''t match the given ip-restriction {1}",ipAdress,foundUser.getOrganization().getIpRestriction()));
                 }
             } catch (PatternSyntaxException e) {
-                throw new InvalidIpException(MessageFormat.format("The pattern {1} doesn't compile for user {0}",foundUser.getId(),foundUser.getOrganization().getIpRestriction()));
+                throw new InvalidIpException(MessageFormat.format("The pattern {1} doesn''t compile for user {0}",foundUser.getId(),foundUser.getOrganization().getIpRestriction()));
             }
         }
         if (!foundUser.isActivated()) {
             throw new UserLockedException(MessageFormat.format("The user {0} is locked. Exiting", foundUser.getEmail()));
         }
         if (passwordEncoder.matches(password,foundUser.getPassword())) {
-            Optional<Application> application = user.get().getApplications().stream().filter(e -> clientId.equals(e.getClientId()) && e.isActivated()).findAny();
+
+            Optional<Application> application = user.flatMap(f -> f.getApplications().stream().filter(e -> clientId.equals(e.getClientId()) && e.isActivated()).findAny());
             if (application.isPresent()) {
                 return;
             }
@@ -76,6 +73,6 @@ public class LoginService {
     }
 
     public String createLoginToken(String username) {
-        return ""; //tokenService.generateShortLivingToken(username);
+        return tokenService.createAuthorizationToken(username);
     }
 }

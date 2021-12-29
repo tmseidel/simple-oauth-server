@@ -3,7 +3,6 @@ package org.remus.simpleoauthserver.security;
 import io.jsonwebtoken.ExpiredJwtException;
 import org.remus.simpleoauthserver.Configuration;
 import org.remus.simpleoauthserver.entity.ApplicationType;
-import org.remus.simpleoauthserver.response.TokenType;
 import org.remus.simpleoauthserver.service.JwtTokenService;
 import org.remus.simpleoauthserver.service.TokenBinService;
 import org.slf4j.Logger;
@@ -24,12 +23,11 @@ import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
-import java.util.List;
 
 @Component
 public class JwtAuthorizationTokenFilter extends OncePerRequestFilter {
 
-    private final Logger logger = LoggerFactory.getLogger(this.getClass());
+    private final Logger log = LoggerFactory.getLogger(this.getClass());
 
     private final JwtTokenService jwtTokenUtil;
 
@@ -55,17 +53,17 @@ public class JwtAuthorizationTokenFilter extends OncePerRequestFilter {
 
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain chain) throws ServletException, IOException {
-        logger.debug("processing authentication for '{}'", request.getRequestURL());
+        log.debug("processing authentication for '{}'", request.getRequestURL());
 
         final String requestHeader = request.getHeader(this.tokenHeader);
 
         String username = null;
-        ApplicationType applicationType = null;
+        ApplicationType applicationType = ApplicationType.REGULAR;
         String authToken = null;
         if (requestHeader != null && requestHeader.startsWith("Bearer ")) {
             authToken = requestHeader.substring(7);
             try {
-                String[] claims = jwtTokenUtil.getClaimFromToken(authToken,(e) -> {
+                String[] claims = jwtTokenUtil.getClaimFromToken(authToken,e -> {
                     String[] returnValue = new String[2];
                     returnValue[0] = e.getSubject();
                     returnValue[1] = e.get("type",String.class);
@@ -75,17 +73,18 @@ public class JwtAuthorizationTokenFilter extends OncePerRequestFilter {
                 applicationType = ApplicationType.valueOf(claims[1]);
 
             } catch (IllegalArgumentException e) {
-                logger.error("an error occurred during getting username from token", e);
+                log.error("an error occurred during getting username from token", e);
             } catch (ExpiredJwtException e) {
-                logger.warn("the token is expired and not valid anymore", e);
+                log.warn("the token is expired and not valid anymore", e);
+                return;
             }
         } else {
-            logger.debug("couldn't find bearer string, will ignore the header");
+            log.debug("couldn't find bearer string, will ignore the header");
         }
 
-        logger.debug("checking authentication for user '{}'", username);
+        log.debug("checking authentication for user '{}'", username);
         if (username != null && SecurityContextHolder.getContext().getAuthentication() == null) {
-            logger.debug("security context was null, so authorizing user");
+            log.debug("security context was null, so authorizing user");
             UserDetails userDetails;
             try {
                 switch (applicationType) {
@@ -101,15 +100,19 @@ public class JwtAuthorizationTokenFilter extends OncePerRequestFilter {
                 
             } catch (UsernameNotFoundException e) {
                 return;
-            }  
-            if (jwtTokenUtil.validateToken(authToken) && !tokenBinService.isTokenInvalidated(authToken)) {
-                UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(userDetails, null, userDetails.getAuthorities());
-                authentication.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
-                logger.info("authorized user '{}', setting security context", username);
-                SecurityContextHolder.getContext().setAuthentication(authentication);
             }
+            checkUserDetailsAndSetAuth(request, authToken, userDetails);
         }
 
         chain.doFilter(request, response);
+    }
+
+    private void checkUserDetailsAndSetAuth(HttpServletRequest request, String authToken, UserDetails userDetails) {
+        if (userDetails != null && !tokenBinService.isTokenInvalidated(authToken)) {
+            UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(userDetails, null, userDetails.getAuthorities());
+            authentication.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
+            log.info("authorized user '{}', setting security context", userDetails.getUsername());
+            SecurityContextHolder.getContext().setAuthentication(authentication);
+        }
     }
 }

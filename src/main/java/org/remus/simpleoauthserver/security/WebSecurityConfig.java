@@ -26,7 +26,7 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
     protected void configure(HttpSecurity http) throws Exception {
 
 
-        http.csrf().disable()
+        http.csrf().ignoringAntMatchers("/auth/admin/data/**","/auth/firstStart/**","/auth/oauth/token").and()
                 .cors()
                 .and()
                 .exceptionHandling().authenticationEntryPoint(new HttpStatusEntryPoint(HttpStatus.UNAUTHORIZED))
@@ -40,11 +40,11 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
                 .antMatchers(HttpMethod.POST,"/auth/firstStart/**").permitAll()
                 .antMatchers(HttpMethod.POST,"/auth/api/**").authenticated()
                 .antMatchers(HttpMethod.OPTIONS).permitAll()
-                .antMatchers(HttpMethod.GET, "/auth/admin/**").hasAnyAuthority("data.admin","dispatch.admin")
-                .antMatchers(HttpMethod.POST, "/auth/admin/**").hasAnyAuthority("data.admin","dispatch.admin")
-                .antMatchers(HttpMethod.PUT, "/auth/admin/**").hasAnyAuthority("data.admin","dispatch.admin")
-                .antMatchers(HttpMethod.DELETE, "/auth/admin/**").hasAnyAuthority("data.admin","dispatch.admin")
-                .antMatchers(HttpMethod.PATCH, "/auth/admin/**").hasAnyAuthority("data.admin","dispatch.admin")
+                .antMatchers(HttpMethod.GET, "/auth/admin/data/**").hasAnyAuthority(ScopeRanking.SUPERADMIN_SCOPE, ScopeRanking.ORGANIZATION_OWNER_SCOPE)
+                .antMatchers(HttpMethod.POST, "/auth/admin/data/**").hasAnyAuthority(ScopeRanking.SUPERADMIN_SCOPE, ScopeRanking.ORGANIZATION_OWNER_SCOPE)
+                .antMatchers(HttpMethod.PUT, "/auth/admin/data/**").hasAnyAuthority(ScopeRanking.SUPERADMIN_SCOPE, ScopeRanking.ORGANIZATION_OWNER_SCOPE)
+                .antMatchers(HttpMethod.DELETE, "/auth/admin/data/**").hasAnyAuthority(ScopeRanking.SUPERADMIN_SCOPE, ScopeRanking.ORGANIZATION_OWNER_SCOPE)
+                .antMatchers(HttpMethod.PATCH, "/auth/admin/data/**").hasAnyAuthority(ScopeRanking.SUPERADMIN_SCOPE, ScopeRanking.ORGANIZATION_OWNER_SCOPE)
                 .antMatchers(HttpMethod.GET, "/auth/errors/**").permitAll()
                 .anyRequest().authenticated();
 

@@ -58,7 +58,7 @@ public class KeyService {
                 KeyFactory kf = KeyFactory.getInstance("RSA");
                 privateKey = kf.generatePrivate(ks);
             } catch (IOException | GeneralSecurityException e) {
-                e.printStackTrace();
+                throw new IllegalStateException("The private key is not present or corrupt", e);
             }
 
         }
@@ -74,7 +74,7 @@ public class KeyService {
                 KeyFactory kf = KeyFactory.getInstance("RSA");
                 publicKey = kf.generatePublic(ks);
             } catch (IOException | GeneralSecurityException e) {
-                e.printStackTrace();
+                throw new IllegalStateException("The public key is not present or corrupt", e);
             }
 
         }

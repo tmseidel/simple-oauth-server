@@ -9,6 +9,8 @@ import org.springframework.stereotype.Service;
 
 import java.util.Optional;
 
+import static org.owasp.encoder.Encode.forJava;
+
 @Service
 public class AuthorizationFlow {
 
@@ -21,11 +23,13 @@ public class AuthorizationFlow {
     }
 
     public void validateAuthorizationRequest(String responseType, String clientId, String redirectUri, String scope, String state, String responseMode) {
-
+        // not yet implemented
     }
 
     public Application findApplication(String clientId, String redirectUrl) {
-        logger.debug("Entering authentication with clientId {} and url {}", clientId, redirectUrl);
+        if (logger.isDebugEnabled()) {
+            logger.debug("Entering authentication with clientId {} and url {}", forJava(clientId), forJava(redirectUrl));
+        }
         Optional<Application> result = applicationRepository.findOneByClientIdAndActivated(clientId, true);
         Application application = result.orElseThrow(() -> new ApplicationNotFoundException(String.format("Application with id %s not found", clientId)));
         if (application.getLoginUrls().contains(redirectUrl)) {

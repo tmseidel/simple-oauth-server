@@ -22,7 +22,7 @@ public class LoginAttemptService {
     @Value("${login.blocked.period}")
     private int blockedPeriod;
 
-    private static Object MUTEX = new Object();
+    private static final Object MUTEX = new Object();
 
     private static class ExpirationEntry {
         LocalDateTime expiration;
@@ -64,7 +64,7 @@ public class LoginAttemptService {
                 try {
                     sleep(1000);
                 } catch (InterruptedException e) {
-                    Thread.interrupted();
+                    Thread.currentThread().interrupt();
                 }
             }
 
@@ -77,9 +77,7 @@ public class LoginAttemptService {
 
     public void loginFailed(String key) {
         synchronized (MUTEX) {
-            if (!attemptsCache.containsKey(key)) {
-                attemptsCache.put(key, new ExpirationEntry());
-            }
+            attemptsCache.computeIfAbsent(key, k -> new ExpirationEntry());
             attemptsCache.get(key).count = attemptsCache.get(key).count +1;
             attemptsCache.get(key).expiration = LocalDateTime.now().plusSeconds(blockedPeriod);
         }

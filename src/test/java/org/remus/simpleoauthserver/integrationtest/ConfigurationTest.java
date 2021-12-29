@@ -28,7 +28,7 @@ public class ConfigurationTest extends BaseRest {
     @Test
     void createUser() {
 
-        String newUserUrl = "/admin/data/users";
+        String newUserUrl = "/auth/admin/data/users";
         String json = "{\n" +
                 "    \"name\" : \"Hans Dampf\",\n" +
                 "    \"email\" : \"test@example.org\",\n" +
