@@ -2,7 +2,9 @@ package org.remus.simpleoauthserver.integrationtest;
 
 import io.restassured.response.ExtractableResponse;
 import io.restassured.response.Response;
+import org.junit.jupiter.api.MethodOrderer;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.TestMethodOrder;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.remus.simpleoauthserver.entity.User;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -20,6 +22,7 @@ import static org.hamcrest.Matchers.notNullValue;
 @DirtiesContext(classMode = DirtiesContext.ClassMode.BEFORE_CLASS)
 @TestPropertySource(
         locations = "classpath:application-integrationtest.properties")
+@TestMethodOrder(MethodOrderer.OrderAnnotation.class)
 public class ConfigurationTest extends BaseRest {
 
     @Test
