@@ -6,6 +6,7 @@ import org.remus.simpleoauthserver.repository.ApplicationRepository;
 import org.remus.simpleoauthserver.response.AccessTokenResponse;
 import org.remus.simpleoauthserver.response.TokenType;
 import org.remus.simpleoauthserver.service.ApplicationNotFoundException;
+import org.remus.simpleoauthserver.service.InvalidInputException;
 import org.remus.simpleoauthserver.service.JwtTokenService;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Controller;
@@ -17,6 +18,8 @@ import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
+
+import static org.remus.simpleoauthserver.flows.FlowController.extractValue;
 
 @Controller
 public class ClientCredentialsFlow {
@@ -38,16 +41,14 @@ public class ClientCredentialsFlow {
      * According to OAuth 2.0 RFC 6749, section 4.4.2 we check the request.
      * @param data
      */
-    public void validateInputs(MultiValueMap<String, String> data, Errors errors) {
-
-
+    public void validateInputs(MultiValueMap<String, String> data) {
+        String clientId = extractValue(data, "client_id").orElseThrow(() -> new InvalidInputException("No client_id present"));
+        String clientSecret = extractValue(data, "client_secret").orElseThrow(() -> new InvalidInputException("No client_secret present"));
+        String[] scopes = extractValue(data, "scope").orElseThrow(() -> new InvalidInputException("No scope present")).split(",");
     }
 
 
-    private Optional<String> extractValue(MultiValueMap<String,String> data, String key) {
-        String value = data.getFirst(key);
-        return value == null ? Optional.empty() : Optional.of(value);
-    }
+
 
     public AccessTokenResponse execute(MultiValueMap<String, String> data) {
         String clientId = extractValue(data, "client_id").orElseThrow();

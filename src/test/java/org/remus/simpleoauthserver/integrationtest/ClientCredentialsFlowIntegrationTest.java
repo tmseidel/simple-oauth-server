@@ -7,7 +7,10 @@ import io.jsonwebtoken.Jwts;
 import io.restassured.response.ExtractableResponse;
 import io.restassured.response.Response;
 import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.MethodOrderer;
+import org.junit.jupiter.api.Order;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.TestMethodOrder;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.annotation.DirtiesContext;
@@ -29,6 +32,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 @DirtiesContext(classMode = DirtiesContext.ClassMode.BEFORE_CLASS)
 @TestPropertySource(
         locations = "classpath:application-integrationtest.properties")
+@TestMethodOrder(MethodOrderer.OrderAnnotation.class)
 class ClientCredentialsFlowIntegrationTest extends BaseRest {
 
     @Test
@@ -42,6 +46,7 @@ class ClientCredentialsFlowIntegrationTest extends BaseRest {
 
     @Test
     @DisplayName("This test creates a new application with a defined scope and tests the Client-Credential Flow")
+    @Order(2)
     void createNewAppForCredentialsFlowIntegration() {
         int scopeId = createNewScope("userdata.write");
         ExtractableResponse<Response> answer;
@@ -64,6 +69,44 @@ class ClientCredentialsFlowIntegrationTest extends BaseRest {
         Jws<Claims> claimsJws = Jwts.parser().setSigningKey(this.publicKey).parseClaimsJws(accessToken1);
         assertEquals("Fq09P3T2YiXST8b6WJ54QO1LWDDUG7SM", claimsJws.getBody().getSubject());
         assertEquals("userdata.write", claimsJws.getBody().get("scope", String.class));
+    }
+
+    @Test
+    @Order(3)
+    @DisplayName("This test checks the error-response that comes with a wrong client-id")
+    void requestAccessTokenWithInvalidClientId() {
+
+        String tokenRequestUrl = "/auth/oauth/token";
+        Map<String, String> formParams = new HashMap<>();
+        formParams.put("grant_type", "client_credentials");
+        formParams.put("client_id", "someOtherClientId");
+        formParams.put("client_secret", "uIFeAD0OK56WD1N3BkhLjX9HGOoCNULsxv724TyYdHVpqPBEtQ8RZ");
+        formParams.put("scope", "userdata.write");
+        ExtractableResponse<Response> answer = given().log().all().header(FORM_URLENCODED).formParams(formParams).post(tokenRequestUrl).then().extract();
+        answer.response().then().assertThat()
+                .statusCode(400);
+        String error = answer.path("error");
+
+        assertEquals("invalid_client",error);
+    }
+
+    @Test
+    @Order(4)
+    @DisplayName("This test checks the error-response that comes with a wrong client-secret")
+    void requestAccessTokenWithInvalidClientSecret() {
+
+        String tokenRequestUrl = "/auth/oauth/token";
+        Map<String, String> formParams = new HashMap<>();
+        formParams.put("grant_type", "client_credentials");
+        formParams.put("client_id", "Fq09P3T2YiXST8b6WJ54QO1LWDDUG7SM");
+        formParams.put("client_secret", "wrong-client-secret");
+        formParams.put("scope", "userdata.write");
+        ExtractableResponse<Response> answer = given().log().all().header(FORM_URLENCODED).formParams(formParams).post(tokenRequestUrl).then().extract();
+        answer.response().then().assertThat()
+                .statusCode(400);
+        String error = answer.path("error");
+
+        assertEquals("invalid_client",error);
     }
 
     private void assignScopeToApi(int scopeId, int applicationId) {
