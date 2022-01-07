@@ -7,9 +7,11 @@ import org.springframework.data.repository.CrudRepository;
 import org.springframework.security.access.prepost.PostAuthorize;
 import org.springframework.security.access.prepost.PostFilter;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.web.bind.annotation.CrossOrigin;
 
 import java.util.Optional;
 
+@CrossOrigin(origins = "*")
 public interface ApplicationRepository extends CrudRepository<Application,Integer> {
     Optional<Application> findOneByClientIdAndActivated(String clientId, boolean activated);
 

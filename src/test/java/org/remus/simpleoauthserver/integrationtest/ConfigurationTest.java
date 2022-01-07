@@ -6,7 +6,6 @@ import org.junit.jupiter.api.MethodOrderer;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestMethodOrder;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.remus.simpleoauthserver.entity.User;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.TestPropertySource;
@@ -15,7 +14,6 @@ import org.springframework.test.context.junit.jupiter.SpringExtension;
 import static io.restassured.RestAssured.given;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.greaterThan;
-import static org.hamcrest.Matchers.notNullValue;
 
 @ExtendWith(SpringExtension.class)
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
@@ -23,7 +21,7 @@ import static org.hamcrest.Matchers.notNullValue;
 @TestPropertySource(
         locations = "classpath:application-integrationtest.properties")
 @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
-public class ConfigurationTest extends BaseRest {
+class ConfigurationTest extends BaseRest {
 
     @Test
     void createUser() {
@@ -41,7 +39,7 @@ public class ConfigurationTest extends BaseRest {
         answer.response().then().assertThat()
                 .body("id", greaterThan(0))
                 .body("name", equalTo("Hans Dampf"))
-                .body("email",equalTo("test@example.org"));
+                .body("email", equalTo("test@example.org"));
 
 
     }

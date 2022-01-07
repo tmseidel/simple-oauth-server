@@ -24,6 +24,7 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
     public static final String AUTH_OAUTH = "/auth/oauth/**";
     public static final String AUTH_CSS = "/auth/css/**";
     public static final String AUTH_API = "/auth/api/**";
+    public static final String AUTH_SWAGGER = "/auth/swagger/**";
     public static final String AUTH_ERRORS = "/auth/errors/**";
     @Inject
     private JwtAuthorizationTokenFilter filter;
@@ -44,6 +45,7 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
                 .antMatchers(HttpMethod.POST, AUTH_OAUTH).permitAll()
                 .antMatchers(HttpMethod.GET, AUTH_FIRST_START).permitAll()
                 .antMatchers(HttpMethod.POST, AUTH_FIRST_START).permitAll()
+                .antMatchers(HttpMethod.GET, AUTH_SWAGGER).permitAll()
                 .antMatchers(HttpMethod.POST, AUTH_API).authenticated()
                 .antMatchers(HttpMethod.OPTIONS).permitAll()
                 .antMatchers(HttpMethod.GET, AUTH_ADMIN_DATA).hasAnyAuthority(ScopeRanking.SUPERADMIN_SCOPE, ScopeRanking.ORGANIZATION_OWNER_SCOPE)

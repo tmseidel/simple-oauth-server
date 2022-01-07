@@ -33,7 +33,8 @@ public class Application {
 
     private String logoutUrl;
 
-    private String cssUrl;
+    @Column(columnDefinition="LONGTEXT")
+    private String css;
 
     private boolean activated;
 
@@ -91,12 +92,12 @@ public class Application {
         this.logoutUrl = logoutUrl;
     }
 
-    public String getCssUrl() {
-        return cssUrl;
+    public String getCss() {
+        return css;
     }
 
-    public void setCssUrl(String cssUrl) {
-        this.cssUrl = cssUrl;
+    public void setCss(String cssUrl) {
+        this.css = cssUrl;
     }
 
     public boolean isActivated() {

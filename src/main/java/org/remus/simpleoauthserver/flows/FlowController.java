@@ -23,12 +23,12 @@ public class FlowController {
 
     public boolean isClientCredentialFlow(MultiValueMap<String, String> data) {
         String type = getGrantType(data);
-        return type != null && CLIENT_CREDENTIALS.equals(type);
+        return CLIENT_CREDENTIALS.equals(type);
     }
 
     public boolean isAuthorizationFlow(MultiValueMap<String, String> data) {
         String type = getGrantType(data);
-        return type != null && AUTHORIZATION_CODE.equals(type);
+        return AUTHORIZATION_CODE.equals(type);
     }
 
     private String getGrantType(MultiValueMap<String, String> data) {

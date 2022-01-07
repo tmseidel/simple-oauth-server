@@ -38,9 +38,9 @@ class ClientCredentialsFlowIntegrationTest extends BaseRest {
     @Test
     @DisplayName("Checks if the default application privides a correct access token, we check the token with the public-key.")
     void credentialFlowWithInitialApplication() {
-        Jws<Claims> claimsJws = Jwts.parser().setSigningKey(this.publicKey).parseClaimsJws(accessToken);
+        Jws<Claims> claimsJws = Jwts.parser().setSigningKey(publicKey).parseClaimsJws(accessToken);
 
-        assertTrue(Jwts.parser().setSigningKey(this.publicKey).isSigned(accessToken));
+        assertTrue(Jwts.parser().setSigningKey(publicKey).isSigned(accessToken));
         assertEquals(clientId, claimsJws.getBody().getSubject());
     }
 
@@ -66,7 +66,7 @@ class ClientCredentialsFlowIntegrationTest extends BaseRest {
         String accessToken1 = answer.path("access_token");
 
         // Step 5: Validating the access token with the public-key and checking for the contents
-        Jws<Claims> claimsJws = Jwts.parser().setSigningKey(this.publicKey).parseClaimsJws(accessToken1);
+        Jws<Claims> claimsJws = Jwts.parser().setSigningKey(publicKey).parseClaimsJws(accessToken1);
         assertEquals("Fq09P3T2YiXST8b6WJ54QO1LWDDUG7SM", claimsJws.getBody().getSubject());
         assertEquals("userdata.write", claimsJws.getBody().get("scope", String.class));
     }
@@ -87,7 +87,7 @@ class ClientCredentialsFlowIntegrationTest extends BaseRest {
                 .statusCode(400);
         String error = answer.path("error");
 
-        assertEquals("invalid_client",error);
+        assertEquals("invalid_client", error);
     }
 
     @Test
@@ -106,7 +106,7 @@ class ClientCredentialsFlowIntegrationTest extends BaseRest {
                 .statusCode(400);
         String error = answer.path("error");
 
-        assertEquals("invalid_client",error);
+        assertEquals("invalid_client", error);
     }
 
     private void assignScopeToApi(int scopeId, int applicationId) {

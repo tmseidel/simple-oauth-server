@@ -1,6 +1,6 @@
 package org.remus.simpleoauthserver.service;
 
-public class InvalidGrandException extends Exception {
+public class InvalidGrandException extends OAuthException {
 
     public InvalidGrandException() {
     }

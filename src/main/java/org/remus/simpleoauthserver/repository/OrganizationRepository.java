@@ -1,6 +1,6 @@
 package org.remus.simpleoauthserver.repository;
 
-import org.remus.simpleoauthserver.entity.Scope;
+import org.remus.simpleoauthserver.entity.Organization;
 import org.springframework.data.repository.CrudRepository;
 import org.springframework.security.access.prepost.PostAuthorize;
 import org.springframework.security.access.prepost.PostFilter;
@@ -10,46 +10,44 @@ import org.springframework.web.bind.annotation.CrossOrigin;
 import java.util.Optional;
 
 @CrossOrigin(origins = "*")
-public interface ScopeRepository extends CrudRepository<Scope, Integer> {
-
-    Scope findScopeByName(String name);
+public interface OrganizationRepository extends CrudRepository<Organization, Integer> {
 
     @Override
     @PreAuthorize("hasPermission(#s, 'write')")
-    <S extends Scope> S save(S s);
+    <S extends Organization> S save(S s);
 
     @Override
     @PreAuthorize("hasPermission(#iterable, 'write')")
-    <S extends Scope> Iterable<S> saveAll(Iterable<S> iterable);
+    <S extends Organization> Iterable<S> saveAll(Iterable<S> iterable);
 
     @Override
     @PostAuthorize("hasPermission(returnObject, 'read')")
-    Optional<Scope> findById(Integer integer);
+    Optional<Organization> findById(Integer integer);
 
     @Override
     boolean existsById(Integer integer);
 
     @Override
     @PostFilter("hasPermission(filterObject, 'read')")
-    Iterable<Scope> findAll();
+    Iterable<Organization> findAll();
 
     @Override
     @PostFilter("hasPermission(filterObject, 'read')")
-    Iterable<Scope> findAllById(Iterable<Integer> iterable);
+    Iterable<Organization> findAllById(Iterable<Integer> iterable);
 
     @Override
-    @PreAuthorize("hasPermission(#integer,'Scope','delete')")
+    @PreAuthorize("hasPermission(#integer,'Organization','delete')")
     void deleteById(Integer integer);
 
     @Override
     @PreAuthorize("hasPermission(#scope, 'delete')")
-    void delete(Scope scope);
+    void delete(Organization scope);
 
     @Override
     @PreAuthorize("hasPermission(#iterable, 'delete')")
-    void deleteAll(Iterable<? extends Scope> iterable);
+    void deleteAll(Iterable<? extends Organization> iterable);
 
     @Override
-    @PreAuthorize("hasPermission('Scope','deleteAll')")
+    @PreAuthorize("hasPermission('Organization','deleteAll')")
     void deleteAll();
 }

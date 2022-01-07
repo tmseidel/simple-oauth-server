@@ -24,8 +24,8 @@ class FlowControllerTest {
 
     @Test
     void isClientCredentialFlow() {
-        MultiValueMap<String,String> mock = mock(MultiValueMap.class);
-        when(mock.getFirst(eq("grant_type"))).thenReturn(FlowController.CLIENT_CREDENTIALS);
+        MultiValueMap<String, String> mock = mock(MultiValueMap.class);
+        when(mock.getFirst("grant_type")).thenReturn(FlowController.CLIENT_CREDENTIALS);
 
         assertTrue(testee.isClientCredentialFlow(mock));
         assertFalse(testee.isAuthorizationFlow(mock));
@@ -33,8 +33,8 @@ class FlowControllerTest {
 
     @Test
     void isAuthorizationFlow() {
-        MultiValueMap<String,String> mock = mock(MultiValueMap.class);
-        when(mock.getFirst(eq("grant_type"))).thenReturn(FlowController.AUTHORIZATION_CODE);
+        MultiValueMap<String, String> mock = mock(MultiValueMap.class);
+        when(mock.getFirst("grant_type")).thenReturn(FlowController.AUTHORIZATION_CODE);
 
         assertFalse(testee.isClientCredentialFlow(mock));
         assertTrue(testee.isAuthorizationFlow(mock));
@@ -42,10 +42,10 @@ class FlowControllerTest {
 
     @Test
     void extractValue() {
-        MultiValueMap<String,String> mock = mock(MultiValueMap.class);
-        when(mock.getFirst(eq("junit"))).thenReturn("theValue");
-        assertEquals(Optional.of("theValue"),FlowController.extractValue(mock, "junit"));
-        assertEquals(Optional.empty(),FlowController.extractValue(mock, "notPresent"));
+        MultiValueMap<String, String> mock = mock(MultiValueMap.class);
+        when(mock.getFirst("junit")).thenReturn("theValue");
+        assertEquals(Optional.of("theValue"), FlowController.extractValue(mock, "junit"));
+        assertEquals(Optional.empty(), FlowController.extractValue(mock, "notPresent"));
 
     }
 }

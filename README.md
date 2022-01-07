@@ -8,13 +8,15 @@ The goal of this project is to provide an OAuth Authentication & Authorization B
 
 In addition it's way simpler than other OpenSource solutions like Keycloak achieved by keeping the features focussed on OAuth.
 
-## Target audiences
-* Companies that need an Authorization Backend for their application & services without depending on commercial services like AWS or Azure.
-* Companies that need a self-hosted Authorization Backend to ensure data-privacy.
-* Application developers that want to test their applications with the different OAuth Flows. This project can be configured with a simple API that fits in your application's test suite.
+## Use cases
+* Add authentication and authorization to your application, either interactive with username/password or automatically via Machine-2-machine authentication. 
+* Store your userdata globally and provide this data after an authentication to any application with OpenId-Connect.
+* Provide Single-Sign-On (SSO) for all your applications.
+* Store all your data on your own infrastructure and don't be dependent from any cloud-provider or other 3rd party.
 
 ## Goals of this project
 * OAuth compliant Authentication & Authorization Services
+* OpenId Connect
 * Simple, focus on key-features
 * Dev-friendly, configurable from console, well-integrated in any CI/CD environment
 
@@ -33,13 +35,15 @@ In addition it's way simpler than other OpenSource solutions like Keycloak achie
 ## Roadmap
 ### 0.1
 * Client Credential Flow
-* Rest-Client for full control of the configuration
 ### 0.2
 * Authorization Flow
-* Hybrid Flow
 * Customizable Login-Pages
+* OpenId Connect
 ### 0.3
 * Device Authorization Flow
+* Hybrid Flow
+### 0.4
+* Rest-Client for full control of the configuration
 
 
  

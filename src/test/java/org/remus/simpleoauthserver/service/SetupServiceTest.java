@@ -8,20 +8,13 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.remus.simpleoauthserver.entity.Application;
-import org.remus.simpleoauthserver.entity.User;
 import org.remus.simpleoauthserver.repository.ApplicationRepository;
-import org.remus.simpleoauthserver.repository.ScopeRepository;
-import org.remus.simpleoauthserver.repository.UserRepository;
 import org.springframework.test.util.ReflectionTestUtils;
 
-import javax.persistence.EntityManager;
-
-import java.util.Collections;
-
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
 class SetupServiceTest {
@@ -34,7 +27,7 @@ class SetupServiceTest {
 
     @BeforeEach
     public void init() {
-        ReflectionTestUtils.setField(testee,"setupSecret","myToken");
+        ReflectionTestUtils.setField(testee, "setupSecret", "myToken");
     }
 
     @Test
@@ -64,7 +57,4 @@ class SetupServiceTest {
         assertFalse(result);
     }
 
-    @Test
-    void createInitialSuperAdmin() {
-    }
 }

@@ -1,13 +1,10 @@
 package org.remus.simpleoauthserver;
 
-import org.apache.commons.lang3.RandomStringUtils;
 import org.apache.commons.lang3.RandomUtils;
 import org.remus.simpleoauthserver.entity.Organization;
 import org.remus.simpleoauthserver.entity.Scope;
 import org.remus.simpleoauthserver.entity.User;
-import org.remus.simpleoauthserver.security.ScopeRanking;
 
-import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -28,7 +25,7 @@ public class TestUtils {
         return org;
     }
 
-    public static User createUser(String name,String mail) {
+    public static User createUser(String name, String mail) {
         User user = new User();
         user.setId(RandomUtils.nextInt());
         user.setName(name);

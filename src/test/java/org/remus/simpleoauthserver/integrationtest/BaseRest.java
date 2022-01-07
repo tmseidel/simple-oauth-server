@@ -10,7 +10,6 @@ import io.restassured.response.ExtractableResponse;
 import io.restassured.response.Response;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.TestInstance;
 import org.junit.jupiter.api.io.TempDir;
 import org.remus.simpleoauthserver.request.InitialApplicationRequest;
 import org.springframework.boot.web.server.LocalServerPort;
@@ -34,23 +33,22 @@ public abstract class BaseRest {
 
     public static final Header JSON = new Header("Content-Type", "application/json");
 
-    public static final Header URI_LIST = new Header("Content-Type","text/uri-list");
+    public static final Header URI_LIST = new Header("Content-Type", "text/uri-list");
 
     public static final Header FORM_URLENCODED = new Header("Content-Type", "application/x-www-form-urlencoded");
-
+    protected static String clientId;
+    protected static String clientSecret;
+    protected static PublicKey publicKey;
+    protected static String accessToken;
+    private static Path pubKey;
     @LocalServerPort
     private int port;
 
-
-    protected static String clientId;
-
-    protected static String clientSecret;
-
-    protected static PublicKey publicKey;
-
-    private static Path pubKey;
-
-    protected static String accessToken;
+    @AfterAll
+    public static void cleanup() {
+        clientId = null;
+        clientSecret = null;
+    }
 
     @BeforeEach
     void createInitialApplicationAndDownloadPubKey(@TempDir Path tempDir) throws Exception {
@@ -71,19 +69,12 @@ public abstract class BaseRest {
             clientSecret = answer.path("client_secret");
 
             answer = given().log().all().get(downloadPubUrl).then().extract();
-            this.pubKey = tempDir.resolve("pubKey.pub");
+            pubKey = tempDir.resolve("pubKey.pub");
             Files.write(pubKey, answer.asByteArray());
             acquireAccessToken();
             loadPublicKey();
         }
     }
-
-    @AfterAll
-    public static void cleanup() {
-        clientId = null;
-        clientSecret = null;
-    }
-
 
     void acquireAccessToken() {
         String tokenRequestUrl = "/auth/oauth/token";
@@ -106,12 +97,12 @@ public abstract class BaseRest {
                 .body("expires_in", equalTo(604800));
 
 
-        this.accessToken = answer.path("access_token");
+        accessToken = answer.path("access_token");
     }
 
     public void loadPublicKey() throws Exception {
         if (publicKey == null) {
-            byte[] bytes = Files.readAllBytes(this.pubKey);
+            byte[] bytes = Files.readAllBytes(pubKey);
             X509EncodedKeySpec ks = new X509EncodedKeySpec(bytes);
             KeyFactory kf = KeyFactory.getInstance("RSA");
             publicKey = kf.generatePublic(ks);

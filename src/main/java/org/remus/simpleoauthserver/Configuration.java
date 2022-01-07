@@ -37,8 +37,14 @@ public class Configuration {
             @Override
             public void configureRepositoryRestConfiguration(RepositoryRestConfiguration config, CorsRegistry cors) {
                 config.exposeIdsFor(User.class, Application.class, Scope.class, Organization.class);
+                cors.addMapping("/*")
+                        .allowedOrigins("*")
+                        .allowedMethods("GET", "PUT", "DELETE", "PATCH")
+                        .allowCredentials(false).maxAge(3600);
             }
+
         };
+
     }
 
     @Bean

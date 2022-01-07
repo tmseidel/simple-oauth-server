@@ -6,12 +6,11 @@ import org.remus.simpleoauthserver.flows.FlowController;
 import org.remus.simpleoauthserver.response.AccessTokenResponse;
 import org.remus.simpleoauthserver.response.ErrorResponse;
 import org.remus.simpleoauthserver.service.ApplicationNotFoundException;
-import org.remus.simpleoauthserver.service.UnsupportedGrantTypeException;
+import org.remus.simpleoauthserver.service.OAuthException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.util.MultiValueMap;
-import org.springframework.validation.Errors;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -38,10 +37,9 @@ public class TokenEndpoint {
     @PostMapping(path = "/auth/oauth/token",
             produces = MediaType.APPLICATION_JSON_VALUE, consumes = MediaType.APPLICATION_FORM_URLENCODED_VALUE)
     public AccessTokenResponse acquireAccessToken(
-            @RequestBody MultiValueMap<String, String> body) {
+            @RequestBody MultiValueMap<String, String> body, HttpServletRequest request) {
         if (flowController.isClientCredentialFlow(body)) {
-            clientCredentialsFlow.validateInputs(body);
-            return clientCredentialsFlow.execute(body);
+            return clientCredentialsFlow.execute(body,request.getHeader("Authorization"));
         } else if (flowController.isAuthorizationFlow(body)) {
 
         }
@@ -49,18 +47,12 @@ public class TokenEndpoint {
 
     }
 
-    @ResponseBody
-    @ExceptionHandler(ApplicationNotFoundException.class)
-    public ResponseEntity<?> handleApplicationNotFoundException(HttpServletRequest request, Throwable ex) {
-        HttpStatus status = HttpStatus.BAD_REQUEST;
-        return new ResponseEntity<>(new ErrorResponse("invalid_client", ex.getMessage()), status);
-    }
 
     @ResponseBody
-    @ExceptionHandler(UnsupportedGrantTypeException.class)
-    public ResponseEntity<?> handleUnsupportedGrantTypeException(HttpServletRequest request, Throwable ex) {
+    @ExceptionHandler({OAuthException.class, ApplicationNotFoundException.class})
+    public ResponseEntity<ErrorResponse> handleUnsupportedGrantTypeException(HttpServletRequest request, Throwable ex) {
         HttpStatus status = HttpStatus.BAD_REQUEST;
-        return new ResponseEntity<>(new ErrorResponse("invalid_client", ex.getMessage()), status);
+        return new ResponseEntity<ErrorResponse>(new ErrorResponse("invalid_client", ex.getMessage()), status);
     }
 
 }

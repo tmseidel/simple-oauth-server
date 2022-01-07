@@ -1,6 +1,6 @@
 package org.remus.simpleoauthserver.service;
 
-public class UnsupportedGrantTypeException extends RuntimeException {
+public class UnsupportedGrantTypeException extends OAuthException {
 
     public UnsupportedGrantTypeException() {
     }

@@ -1,6 +1,6 @@
 package org.remus.simpleoauthserver.service;
 
-public class InvalidInputException extends RuntimeException {
+public class InvalidInputException extends OAuthException {
     public InvalidInputException() {
         super();
     }

@@ -77,7 +77,7 @@ public class AuthorizationEndpoint {
         Application application = authFlow.findApplication(clientId, redirect);
         model.addAttribute("login", new LoginForm());
         model.addAttribute("appName", application.getName());
-        model.addAttribute("appCss", application.getCssUrl());
+        model.addAttribute("appCss", application.getCss());
         session.setAttribute(STATE, state);
         session.setAttribute("client_id", clientId);
         session.setAttribute("scope", scope);
@@ -125,7 +125,7 @@ public class AuthorizationEndpoint {
 
         model.addAttribute("login", login);
         model.addAttribute("appName", application.getName());
-        model.addAttribute("appCss", application.getCssUrl());
+        model.addAttribute("appCss", application.getCss());
 
         return "authorize";
     }

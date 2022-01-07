@@ -6,22 +6,20 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestMethodOrder;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.remus.simpleoauthserver.entity.Application;
-import org.remus.simpleoauthserver.entity.User;
 import org.remus.simpleoauthserver.repository.ApplicationRepository;
-import org.remus.simpleoauthserver.repository.UserRepository;
 import org.remus.simpleoauthserver.request.InitialApplicationRequest;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 import org.springframework.web.server.ResponseStatusException;
 
 import javax.inject.Inject;
-
 import java.io.IOException;
 import java.security.NoSuchAlgorithmException;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+
 @ExtendWith(SpringExtension.class)
 @SpringBootTest
 @TestPropertySource(
@@ -42,7 +40,7 @@ class FirstStartControllerIntegrationTest {
         // invalidate the token
         request.setInitialAuthToken("wrongToken");
 
-        assertThrows(ResponseStatusException.class,() -> testee.run(request),"Expected a 401");
+        assertThrows(ResponseStatusException.class, () -> testee.run(request), "Expected a 401");
     }
 
     @Test
@@ -62,7 +60,7 @@ class FirstStartControllerIntegrationTest {
     void runAfterHappyPath() {
         InitialApplicationRequest request = createValidRequest();
 
-        assertThrows(ResponseStatusException.class,() -> testee.run(request),"Expected a 401");
+        assertThrows(ResponseStatusException.class, () -> testee.run(request), "Expected a 401");
     }
 
     private InitialApplicationRequest createValidRequest() {
