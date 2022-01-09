@@ -2,6 +2,7 @@ package org.remus.simpleoauthserver.flows;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.remus.simpleoauthserver.controller.ValueExtractionUtil;
 import org.springframework.util.MultiValueMap;
 
 import java.util.Optional;
@@ -44,8 +45,8 @@ class FlowControllerTest {
     void extractValue() {
         MultiValueMap<String, String> mock = mock(MultiValueMap.class);
         when(mock.getFirst("junit")).thenReturn("theValue");
-        assertEquals(Optional.of("theValue"), FlowController.extractValue(mock, "junit"));
-        assertEquals(Optional.empty(), FlowController.extractValue(mock, "notPresent"));
+        assertEquals(Optional.of("theValue"), ValueExtractionUtil.extractValue(mock, "junit"));
+        assertEquals(Optional.empty(), ValueExtractionUtil.extractValue(mock, "notPresent"));
 
     }
 }

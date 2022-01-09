@@ -53,7 +53,7 @@ public class JwtTokenService {
                 .setSubject(username)
                 .setIssuedAt(createdDate)
                 .setExpiration(expirationDate)
-                .signWith(SignatureAlgorithm.RS256, keyService.getPrivateKey())
+                .signWith(SignatureAlgorithm.RS256, keyService.getAuthorizationTokenKey())
                 .compact();
     }
 

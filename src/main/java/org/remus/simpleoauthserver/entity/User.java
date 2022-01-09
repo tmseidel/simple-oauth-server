@@ -4,7 +4,9 @@ package org.remus.simpleoauthserver.entity;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
+import javax.persistence.CollectionTable;
 import javax.persistence.Column;
+import javax.persistence.ElementCollection;
 import javax.persistence.Entity;
 import javax.persistence.FetchType;
 import javax.persistence.GeneratedValue;
@@ -14,12 +16,14 @@ import javax.persistence.JoinColumn;
 import javax.persistence.JoinTable;
 import javax.persistence.ManyToMany;
 import javax.persistence.ManyToOne;
+import javax.persistence.MapKeyColumn;
 import javax.persistence.PostLoad;
 import javax.persistence.Temporal;
 import javax.persistence.TemporalType;
 import javax.persistence.Transient;
 import java.util.Date;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 @Entity
@@ -59,6 +63,12 @@ public class User {
 
     @Temporal(TemporalType.TIMESTAMP)
     private Date created;
+
+    @ElementCollection
+    @MapKeyColumn(name="name")
+    @Column(name="value")
+    @CollectionTable(name="user_properties", joinColumns=@JoinColumn(name="id"))
+    private Map<String, String> properties;
 
     @JsonIgnore
     @Transient
@@ -171,5 +181,13 @@ public class User {
 
     public boolean isStoredActivated() {
         return storedActivated;
+    }
+
+    public void setProperties(Map<String, String> properties) {
+        this.properties = properties;
+    }
+
+    public Map<String, String> getProperties() {
+        return properties;
     }
 }

@@ -4,6 +4,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.remus.simpleoauthserver.entity.Application;
 import org.remus.simpleoauthserver.entity.Scope;
 import org.remus.simpleoauthserver.repository.ApplicationRepository;
+import org.remus.simpleoauthserver.repository.UserRepository;
 import org.remus.simpleoauthserver.response.AccessTokenResponse;
 import org.remus.simpleoauthserver.response.TokenType;
 import org.remus.simpleoauthserver.service.ApplicationNotFoundException;
@@ -11,36 +12,25 @@ import org.remus.simpleoauthserver.service.InvalidGrandException;
 import org.remus.simpleoauthserver.service.InvalidInputException;
 import org.remus.simpleoauthserver.service.JwtTokenService;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Controller;
-import org.springframework.util.Base64Utils;
 import org.springframework.util.MultiValueMap;
-import org.springframework.validation.Errors;
 
-import javax.servlet.http.HttpServletRequest;
 import java.util.Arrays;
 import java.util.Base64;
-import java.util.List;
-import java.util.Locale;
-import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import static org.remus.simpleoauthserver.flows.FlowController.extractValue;
+import static org.remus.simpleoauthserver.controller.ValueExtractionUtil.extractValue;
 
 @Controller
-public class ClientCredentialsFlow {
-
-    private ApplicationRepository applicationRepository;
-
-    private JwtTokenService jwtTokenService;
+public class ClientCredentialsFlow extends OAuthFlow{
 
     @Value("${jwt.expiration}")
     private Long expiration;
 
-
-    public ClientCredentialsFlow(ApplicationRepository applicationRepository, JwtTokenService jwtTokenService) {
-        this.applicationRepository = applicationRepository;
-        this.jwtTokenService = jwtTokenService;
+    public ClientCredentialsFlow(ApplicationRepository applicationRepository, UserRepository userRepository, JwtTokenService jwtTokenService, PasswordEncoder passwordEncoder) {
+        super(applicationRepository, userRepository, jwtTokenService, passwordEncoder);
     }
 
 
@@ -85,11 +75,7 @@ public class ClientCredentialsFlow {
 
         Application application = applicationRepository.findApplicationByClientIdAndClientSecretAndActivated(clientId, clientSecret, true)
                 .orElseThrow(() -> new ApplicationNotFoundException(String.format("The application with client_id %s was not found",clientId)));
-        Set<String> scopesAsString = application.getScopeList().stream().map(Scope::getName).collect(Collectors.toSet());
-        boolean requestedScopesAreValid = Arrays.stream(scopes).anyMatch(e -> scopesAsString.contains(e));
-        if (!requestedScopesAreValid) {
-            throw new InvalidGrandException(String.format("The requested scopes %s are not available",scopes));
-        }
+        checkScope(scopes, application);
         AccessTokenResponse returnValue = new AccessTokenResponse();
         String accessToken = jwtTokenService.createAccessToken(application.getClientId(), application.getApplicationType(), scopes);
 
@@ -100,4 +86,6 @@ public class ClientCredentialsFlow {
         return returnValue;
 
     }
+
+
 }

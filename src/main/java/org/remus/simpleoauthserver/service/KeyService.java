@@ -1,28 +1,49 @@
 package org.remus.simpleoauthserver.service;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import org.apache.commons.lang3.RandomStringUtils;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
-import java.io.FileNotFoundException;
+import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.security.GeneralSecurityException;
-import java.security.Key;
 import java.security.KeyFactory;
 import java.security.KeyPair;
 import java.security.KeyPairGenerator;
 import java.security.NoSuchAlgorithmException;
 import java.security.PrivateKey;
 import java.security.PublicKey;
-import java.security.spec.InvalidKeySpecException;
 import java.security.spec.PKCS8EncodedKeySpec;
 import java.security.spec.X509EncodedKeySpec;
 
 @Service
 public class KeyService {
+
+    private static class JWTKeys {
+        private String authorizationToken;
+        private String refreshTokenKey;
+
+        public String getAuthorizationToken() {
+            return authorizationToken;
+        }
+
+        public void setAuthorizationToken(String authorizationToken) {
+            this.authorizationToken = authorizationToken;
+        }
+
+        public String getRefreshTokenKey() {
+            return refreshTokenKey;
+        }
+
+        public void setRefreshTokenKey(String refreshTokenKey) {
+            this.refreshTokenKey = refreshTokenKey;
+        }
+    }
 
     @Value("${jwt.privatekey.location}")
     private String privateKeyLocation;
@@ -30,11 +51,39 @@ public class KeyService {
     @Value("${jwt.publickey.location}")
     private String publicKeyLocation;
 
+    @Value("${jwt.keys.location}")
+    private String jwtKeysLocation;
+
     private PrivateKey privateKey;
 
     private PublicKey publicKey;
 
-    public void createKeyPair() throws NoSuchAlgorithmException, IOException {
+    private JWTKeys jwtKeys;
+
+    public String getAuthorizationTokenKey() {
+        if (jwtKeys == null) {
+            loadJWTKeys();
+        }
+        return jwtKeys.getAuthorizationToken();
+    }
+
+    public String getRefrehTokenKey() {
+        if (jwtKeys == null) {
+            loadJWTKeys();
+        }
+        return jwtKeys.getRefreshTokenKey();
+    }
+
+    private synchronized void loadJWTKeys() {
+        File file = Paths.get(jwtKeysLocation).toFile();
+        try {
+            this.jwtKeys = new ObjectMapper().readValue(file,JWTKeys.class);
+        } catch (IOException e) {
+            throw new IllegalStateException("Error while loading jwt-signature-keys",e);
+        }
+    }
+
+    public synchronized void createKeyPair() throws NoSuchAlgorithmException, IOException {
         KeyPairGenerator kpg = null;
         kpg = KeyPairGenerator.getInstance("RSA");
         kpg.initialize(2048);
@@ -47,6 +96,13 @@ public class KeyService {
         try (FileOutputStream fos = new FileOutputStream(publicKeyLocation)) {
             fos.write(publicKey.getEncoded());
         }
+        try (FileOutputStream fos = new FileOutputStream(jwtKeysLocation)) {
+            JWTKeys jwtKeys = new JWTKeys();
+            jwtKeys.setAuthorizationToken(RandomStringUtils.random(32, true, true));
+            jwtKeys.setRefreshTokenKey(RandomStringUtils.random(32, true, true));
+            new ObjectMapper().writeValue(fos,jwtKeys);
+        }
+
     }
 
     public PrivateKey getPrivateKey() {

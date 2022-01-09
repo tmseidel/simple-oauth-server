@@ -38,6 +38,8 @@ public class Application {
 
     private boolean activated;
 
+    private boolean trustworthy;
+
     @Column(unique = true, nullable = false)
     @JsonProperty(access = JsonProperty.Access.WRITE_ONLY)
     private String clientSecret;
@@ -130,5 +132,13 @@ public class Application {
 
     public void setApplicationType(ApplicationType applicationType) {
         this.applicationType = applicationType;
+    }
+
+    public void setTrustworthy(boolean trustworthy) {
+        this.trustworthy = trustworthy;
+    }
+
+    public boolean isTrustworthy() {
+        return trustworthy;
     }
 }
