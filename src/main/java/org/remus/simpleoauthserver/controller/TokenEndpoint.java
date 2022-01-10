@@ -41,7 +41,7 @@ public class TokenEndpoint {
         if (flowController.isClientCredentialFlow(body)) {
             return clientCredentialsFlow.execute(body,request.getHeader("Authorization"));
         } else if (flowController.isAuthorizationFlow(body)) {
-            // not yet implemented
+            authorizationFlow.exexute(body);
         }
         return new AccessTokenResponse();
 

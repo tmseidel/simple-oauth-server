@@ -1,7 +1,6 @@
 package org.remus.simpleoauthserver.repository;
 
 import org.remus.simpleoauthserver.entity.Application;
-import org.remus.simpleoauthserver.entity.User;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.CrudRepository;
 import org.springframework.security.access.prepost.PostAuthorize;

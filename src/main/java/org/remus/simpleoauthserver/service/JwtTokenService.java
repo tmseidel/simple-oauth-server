@@ -56,6 +56,18 @@ public class JwtTokenService {
                 .signWith(SignatureAlgorithm.RS256, keyService.getAuthorizationTokenKey())
                 .compact();
     }
+    public String createRefreshToken(String username) {
+        final Date createdDate = new Date();
+        final Date expirationDate = calculateLongExpirationDate(createdDate);
+
+        return Jwts.builder()
+                .setClaims(new HashMap<>())
+                .setSubject(username)
+                .setIssuedAt(createdDate)
+                .setExpiration(expirationDate)
+                .signWith(SignatureAlgorithm.RS256, keyService.getRefrehTokenKey())
+                .compact();
+    }
 
     private Date calculateExpirationDate(Date createdDate) {
         return new Date(createdDate.getTime() + expiration * 1000);

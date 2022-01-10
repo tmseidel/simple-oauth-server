@@ -83,4 +83,8 @@ public class AuthorizationFlow extends OAuthFlow {
     public String createLoginToken(String userName) {
         return jwtTokenService.createAuthorizationToken(userName);
     }
+
+    public void exexute(MultiValueMap<String, String> body) {
+        // not yet implemented
+    }
 }
