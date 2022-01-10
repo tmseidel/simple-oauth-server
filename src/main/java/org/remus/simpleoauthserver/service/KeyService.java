@@ -97,10 +97,10 @@ public class KeyService {
             fos.write(publicKey.getEncoded());
         }
         try (FileOutputStream fos = new FileOutputStream(jwtKeysLocation)) {
-            JWTKeys jwtKeys = new JWTKeys();
-            jwtKeys.setAuthorizationToken(RandomStringUtils.random(32, true, true));
-            jwtKeys.setRefreshTokenKey(RandomStringUtils.random(32, true, true));
-            new ObjectMapper().writeValue(fos,jwtKeys);
+            JWTKeys keys = new JWTKeys();
+            keys.setAuthorizationToken(RandomStringUtils.random(32, true, true));
+            keys.setRefreshTokenKey(RandomStringUtils.random(32, true, true));
+            new ObjectMapper().writeValue(fos,keys);
         }
 
     }

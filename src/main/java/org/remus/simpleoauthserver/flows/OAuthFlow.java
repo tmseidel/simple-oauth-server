@@ -46,7 +46,7 @@ public abstract class OAuthFlow {
 
     protected void checkScope(String[] scopes, Application application) {
         Set<String> scopesAsString = application.getScopeList().stream().map(Scope::getName).collect(Collectors.toSet());
-        boolean requestedScopesAreValid = Arrays.stream(scopes).anyMatch(e -> scopesAsString.contains(e));
+        boolean requestedScopesAreValid = Arrays.stream(scopes).anyMatch(scopesAsString::contains);
         if (!requestedScopesAreValid) {
             throw new InvalidGrandException(String.format("The requested scopes %s are not available", scopes));
         }
@@ -55,7 +55,9 @@ public abstract class OAuthFlow {
     public User checkUser(String username, String password, String clientId, String ipAdress) {
         Optional<User> user = userRepository.findOneByEmail(username);
         User foundUser = user.orElseThrow(() -> new UserNotFoundException("Error checking user, Either passowrd, username or client-id does not match."));
-        LOGGER.debug("checkUser() called with: username = [{}], clientId = [{}], ipAdress = [{}]", forJava(username), forJava(clientId), forJava(ipAdress));
+        if (LOGGER.isDebugEnabled()) {
+            LOGGER.debug("checkUser() called with: username = [{}], clientId = [{}], ipAdress = [{}]", forJava(username), forJava(clientId), forJava(ipAdress));
+        }
         if (!StringUtils.isEmpty(foundUser.getOrganization().getIpRestriction())) {
             try {
                 if (!ipAdress.matches(foundUser.getOrganization().getIpRestriction())) {

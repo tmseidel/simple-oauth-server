@@ -41,7 +41,7 @@ public class TokenEndpoint {
         if (flowController.isClientCredentialFlow(body)) {
             return clientCredentialsFlow.execute(body,request.getHeader("Authorization"));
         } else if (flowController.isAuthorizationFlow(body)) {
-
+            // not yet implemented
         }
         return new AccessTokenResponse();
 
@@ -52,7 +52,7 @@ public class TokenEndpoint {
     @ExceptionHandler({OAuthException.class, ApplicationNotFoundException.class})
     public ResponseEntity<ErrorResponse> handleUnsupportedGrantTypeException(HttpServletRequest request, Throwable ex) {
         HttpStatus status = HttpStatus.BAD_REQUEST;
-        return new ResponseEntity<ErrorResponse>(new ErrorResponse("invalid_client", ex.getMessage()), status);
+        return new ResponseEntity<>(new ErrorResponse("invalid_client", ex.getMessage()), status);
     }
 
 }

@@ -28,13 +28,10 @@ public class SetupService {
 
     private ApplicationRepository applicationRepository;
 
-    private PasswordEncoder passwordEncoder;
-
     private EntityManager entityManager;
 
-    public SetupService(ApplicationRepository applicationRepository, PasswordEncoder passwordEncoder, EntityManager entityManager) {
+    public SetupService(ApplicationRepository applicationRepository, EntityManager entityManager) {
         this.applicationRepository = applicationRepository;
-        this.passwordEncoder = passwordEncoder;
         this.entityManager = entityManager;
     }
 

@@ -15,8 +15,6 @@ public class UserValidator implements Validator {
 
     @Override
     public void validate(Object o, Errors errors) {
-        LoginForm lf = (LoginForm) o;
-
         ValidationUtils.rejectIfEmptyOrWhitespace(errors,"userName","username.not.empty");
         ValidationUtils.rejectIfEmptyOrWhitespace(errors,"password","password.not.empty");
     }
