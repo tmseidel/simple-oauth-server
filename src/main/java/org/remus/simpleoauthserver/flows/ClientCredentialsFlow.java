@@ -3,6 +3,7 @@ package org.remus.simpleoauthserver.flows;
 import org.apache.commons.lang3.StringUtils;
 import org.remus.simpleoauthserver.entity.Application;
 import org.remus.simpleoauthserver.repository.ApplicationRepository;
+import org.remus.simpleoauthserver.repository.ScopeRepository;
 import org.remus.simpleoauthserver.repository.UserRepository;
 import org.remus.simpleoauthserver.response.AccessTokenResponse;
 import org.remus.simpleoauthserver.response.TokenType;
@@ -15,19 +16,22 @@ import org.springframework.stereotype.Controller;
 import org.springframework.util.MultiValueMap;
 
 import java.util.Base64;
+import java.util.HashMap;
+import java.util.Map;
 
 import static org.remus.simpleoauthserver.controller.ValueExtractionUtil.extractValue;
+import static org.remus.simpleoauthserver.service.JwtTokenService.TokenType.ACCESS;
 
 @Controller
 public class ClientCredentialsFlow extends OAuthFlow{
 
     public static final String BASIC_WITH_WHITESPACE = "basic ";
 
-    @Value("${jwt.expiration}")
+    @Value("${jwt.clientcredential.access.token.expiration}")
     private Long expiration;
 
-    public ClientCredentialsFlow(ApplicationRepository applicationRepository, UserRepository userRepository, JwtTokenService jwtTokenService, PasswordEncoder passwordEncoder) {
-        super(applicationRepository, userRepository, jwtTokenService, passwordEncoder);
+    public ClientCredentialsFlow(ApplicationRepository applicationRepository, UserRepository userRepository, JwtTokenService jwtTokenService, PasswordEncoder passwordEncoder, ScopeRepository scopeRepository) {
+        super(applicationRepository, userRepository, jwtTokenService, passwordEncoder,scopeRepository);
     }
 
 
@@ -74,7 +78,10 @@ public class ClientCredentialsFlow extends OAuthFlow{
                 .orElseThrow(() -> new ApplicationNotFoundException(String.format("The application with client_id %s was not found",clientId)));
         checkScope(scopes, application);
         AccessTokenResponse returnValue = new AccessTokenResponse();
-        String accessToken = jwtTokenService.createAccessToken(application.getClientId(), application.getApplicationType(), scopes);
+        Map<String,Object> claims = new HashMap<>();
+        claims.put("type",application.getApplicationType().name());
+        claims.put("scope",String.join(",",scopes));
+        String accessToken = jwtTokenService.createToken(application.getClientId(), claims, ACCESS);
 
         returnValue.setAccessToken(accessToken);
         returnValue.setTokenType(TokenType.BEARER.getStringValue());

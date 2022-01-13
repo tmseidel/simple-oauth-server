@@ -7,12 +7,15 @@ import org.springframework.security.access.prepost.PostFilter;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.CrossOrigin;
 
+import java.util.List;
 import java.util.Optional;
 
 @CrossOrigin(origins = "*")
 public interface ScopeRepository extends CrudRepository<Scope, Integer> {
 
     Scope findScopeByName(String name);
+
+    Iterable<Scope> findScopesByNameIn(List<String> names);
 
     @Override
     @PreAuthorize("hasPermission(#s, 'write')")

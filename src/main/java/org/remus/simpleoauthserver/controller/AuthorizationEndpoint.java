@@ -3,6 +3,7 @@ package org.remus.simpleoauthserver.controller;
 import org.remus.simpleoauthserver.entity.Application;
 import org.remus.simpleoauthserver.entity.User;
 import org.remus.simpleoauthserver.flows.AuthorizationFlow;
+import org.remus.simpleoauthserver.request.AuthorizeApplicationForm;
 import org.remus.simpleoauthserver.request.LoginForm;
 import org.remus.simpleoauthserver.response.ErrorResponse;
 import org.remus.simpleoauthserver.service.ApplicationNotFoundException;
@@ -10,6 +11,7 @@ import org.remus.simpleoauthserver.service.InvalidIpException;
 import org.remus.simpleoauthserver.service.LoginAttemptService;
 import org.remus.simpleoauthserver.service.OAuthException;
 import org.remus.simpleoauthserver.service.ScopeNotFoundException;
+import org.remus.simpleoauthserver.service.TokenHelper;
 import org.remus.simpleoauthserver.service.UserLockedException;
 import org.remus.simpleoauthserver.service.UserNotFoundException;
 import org.springframework.http.HttpStatus;
@@ -34,6 +36,8 @@ import org.springframework.web.servlet.view.RedirectView;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpSession;
+import java.util.HashMap;
+import java.util.Map;
 
 import static org.remus.simpleoauthserver.controller.ValueExtractionUtil.extractValue;
 
@@ -53,14 +57,17 @@ public class AuthorizationEndpoint {
 
     private final AuthorizationFlow authFlow;
 
+    private final TokenHelper tokenHelper;
 
-    public AuthorizationEndpoint(UserValidator userValidator, LoginAttemptService loginAttemptService, AuthorizationFlow authFlow) {
+
+    public AuthorizationEndpoint(UserValidator userValidator, LoginAttemptService loginAttemptService, AuthorizationFlow authFlow, TokenHelper tokenHelper) {
         this.userValidator = userValidator;
         this.loginAttemptService = loginAttemptService;
         this.authFlow = authFlow;
+        this.tokenHelper = tokenHelper;
     }
 
-    @InitBinder
+    @InitBinder("login")
     protected void initBinder(WebDataBinder binder) {
         binder.addValidators(userValidator);
     }
@@ -70,35 +77,45 @@ public class AuthorizationEndpoint {
                             Model model, HttpSession session) {
         authFlow.validateAuthorizationRequest(requestParams);
         Application application = authFlow.findApplication(requestParams);
-        model.addAttribute("login", new LoginForm());
+        Map<String,Object> values = new HashMap<>();
+        values.put(STATE, extractValue(requestParams,STATE).orElse(null));
+        values.put(CLIENT_ID, extractValue(requestParams, CLIENT_ID).orElseThrow());
+        values.put(SCOPE, extractValue(requestParams, SCOPE).orElse(null));
+        values.put(REDIRECT_URI,  extractValue(requestParams,REDIRECT_URI).orElse(null));
+        model.addAttribute("login", new LoginForm(tokenHelper.encode(values)));
         model.addAttribute("appName", application.getName());
         model.addAttribute("appCss", application.getCss());
-        session.setAttribute(STATE, extractValue(requestParams,STATE).orElse(null));
-        session.setAttribute(CLIENT_ID, extractValue(requestParams, CLIENT_ID).orElseThrow());
-        session.setAttribute(SCOPE, extractValue(requestParams, SCOPE).orElse(null));
-        session.setAttribute(REDIRECT_URI,  extractValue(requestParams,REDIRECT_URI).orElse(null));
+
         return "authorize";
     }
 
     @PostMapping("/authorize")
     public String authorizeSubmit(@ModelAttribute("login") @Validated LoginForm login, BindingResult result,
-                                  Model model, RedirectAttributes redirectAttributes, HttpSession session, HttpServletRequest request) {
-        String redirectUri = (String) session.getAttribute(REDIRECT_URI);
-        String clientId = (String) session.getAttribute(CLIENT_ID);
-        String scopeList = (String) session.getAttribute(SCOPE);
+                                  Model model, RedirectAttributes redirectAttributes, HttpServletRequest request) {
+        String token = login.getSignedData();
+        Map<String, Object> values = tokenHelper.decode(token, REDIRECT_URI, CLIENT_ID, SCOPE, STATE);
+        String redirectUri = (String) values.get(REDIRECT_URI);
+        String clientId = (String) values.get(CLIENT_ID);
+        String scopeList = (String) values.get(SCOPE);
+        String state = (String) values.get(STATE);
         if (loginAttemptService.isBlocked(request.getRemoteAddr())) {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN, "This IP is blocked");
         }
         Application application = authFlow.getApplicationByClientIdAndRedirect(clientId, redirectUri);
+        model.addAttribute("login", login);
+        model.addAttribute("appName", application.getName());
+        model.addAttribute("appCss", application.getCss());
         if (!result.hasErrors()) {
             try {
                 User user = authFlow.checkLogin(login.getUserName(), login.getPassword(), clientId, request.getRemoteAddr(), scopeList.split(","));
                 loginAttemptService.loginSucceeded(request.getRemoteAddr());
                 if (authFlow.needsUserPermissionForApp(user, clientId)) {
-                    // not yet implemented.
+                    values.put("user", user.getEmail());
+                    model.addAttribute("registerApp", new AuthorizeApplicationForm(tokenHelper.encode(values)));
+                    return "registerapp";
                 } else {
-                    redirectAttributes.addAttribute("code", authFlow.createLoginToken(login.getUserName()));
-                    redirectAttributes.addAttribute(STATE, session.getAttribute(STATE));
+                    redirectAttributes.addAttribute("code", authFlow.createAuthorizationToken(login.getUserName(),values));
+                    redirectAttributes.addAttribute(STATE, state);
                     return "redirect:" + redirectUri;
                 }
             } catch (UserNotFoundException e) {
@@ -110,22 +127,38 @@ public class AuthorizationEndpoint {
                 result.rejectValue(USER_NAME, "user.locked");
             } catch (ScopeNotFoundException e) {
                 result.rejectValue(USER_NAME, "scope.not.found");
+                redirectAttributes.addAttribute("error.id", "invalid_scope");
+                redirectAttributes.addAttribute("error.message", "The user has cancelled the login");
+                redirectAttributes.addAttribute(STATE,state);
+                RedirectView redirectView = new RedirectView();
+                redirectView.setUrl(redirectUri);
             }
         }
-
-        model.addAttribute("login", login);
-        model.addAttribute("appName", application.getName());
-        model.addAttribute("appCss", application.getCss());
-
         return "authorize";
     }
 
-    @PostMapping("/cancel")
-    public RedirectView cancelSubmit(@ModelAttribute LoginForm greeting, RedirectAttributes redirectAttributes, HttpSession session) {
-        String redirectUri = (String) session.getAttribute(REDIRECT_URI);
+    @PostMapping("/registerApp")
+    public String registerApplication(@ModelAttribute("registerApp") AuthorizeApplicationForm form,
+                                      Model model, RedirectAttributes redirectAttributes) {
+        Map<String, Object> data = tokenHelper.decode(form.getSignedData(), REDIRECT_URI, "user", STATE, CLIENT_ID);
+        String redirectUri = (String) data.get(REDIRECT_URI);
+        String userName = (String) data.get("user");
+        String clientId = (String) data.get(CLIENT_ID);
+        String state = (String) data.get(STATE);
+        authFlow.registerApplication(clientId,userName);
+        redirectAttributes.addAttribute("code", authFlow.createAuthorizationToken(userName,data));
+        redirectAttributes.addAttribute(STATE,state);
+        return "redirect:" + redirectUri;
+    }
+
+    @PostMapping("/cancelLogin")
+    public RedirectView cancelSubmit(@ModelAttribute("login") LoginForm loginForm, RedirectAttributes redirectAttributes) {
+        Map<String, Object> values = tokenHelper.decode(loginForm.getSignedData(), REDIRECT_URI, STATE);
+        String redirectUri = (String) values.get(REDIRECT_URI);
+        String state = (String) values.get(STATE);
         redirectAttributes.addAttribute("error.id", "user.cancelled");
         redirectAttributes.addAttribute("error.message", "The user has cancelled the login");
-        redirectAttributes.addAttribute(STATE, session.getAttribute(STATE));
+        redirectAttributes.addAttribute(STATE,state);
         RedirectView redirectView = new RedirectView();
         redirectView.setUrl(redirectUri);
         return redirectView;

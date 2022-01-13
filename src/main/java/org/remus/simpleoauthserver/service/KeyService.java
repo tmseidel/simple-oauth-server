@@ -27,6 +27,7 @@ public class KeyService {
     private static class JWTKeys {
         private String authorizationToken;
         private String refreshTokenKey;
+        private String formTokenKey;
 
         public String getAuthorizationToken() {
             return authorizationToken;
@@ -42,6 +43,14 @@ public class KeyService {
 
         public void setRefreshTokenKey(String refreshTokenKey) {
             this.refreshTokenKey = refreshTokenKey;
+        }
+
+        public String getFormTokenKey() {
+            return formTokenKey;
+        }
+
+        public void setFormTokenKey(String formTokenKey) {
+            this.formTokenKey = formTokenKey;
         }
     }
 
@@ -74,6 +83,13 @@ public class KeyService {
         return jwtKeys.getRefreshTokenKey();
     }
 
+    public String getFormTokenKey() {
+        if (jwtKeys == null) {
+            loadJWTKeys();
+        }
+        return jwtKeys.getFormTokenKey();
+    }
+
     private synchronized void loadJWTKeys() {
         File file = Paths.get(jwtKeysLocation).toFile();
         try {
@@ -100,6 +116,7 @@ public class KeyService {
             JWTKeys keys = new JWTKeys();
             keys.setAuthorizationToken(RandomStringUtils.random(32, true, true));
             keys.setRefreshTokenKey(RandomStringUtils.random(32, true, true));
+            keys.setFormTokenKey(RandomStringUtils.random(32, true, true));
             new ObjectMapper().writeValue(fos,keys);
         }
 

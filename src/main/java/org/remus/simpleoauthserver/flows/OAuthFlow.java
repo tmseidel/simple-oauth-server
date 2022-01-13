@@ -5,6 +5,7 @@ import org.remus.simpleoauthserver.entity.Application;
 import org.remus.simpleoauthserver.entity.Scope;
 import org.remus.simpleoauthserver.entity.User;
 import org.remus.simpleoauthserver.repository.ApplicationRepository;
+import org.remus.simpleoauthserver.repository.ScopeRepository;
 import org.remus.simpleoauthserver.repository.UserRepository;
 import org.remus.simpleoauthserver.service.InvalidGrandException;
 import org.remus.simpleoauthserver.service.InvalidIpException;
@@ -27,6 +28,8 @@ import static org.owasp.encoder.Encode.forJava;
 
 public abstract class OAuthFlow {
 
+    private final ScopeRepository scopeRepository;
+
     protected ApplicationRepository applicationRepository;
 
     protected UserRepository userRepository;
@@ -37,23 +40,25 @@ public abstract class OAuthFlow {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(OAuthFlow.class);
 
-    protected OAuthFlow(ApplicationRepository applicationRepository, UserRepository userRepository, JwtTokenService jwtTokenService, PasswordEncoder passwordEncoder) {
+    protected OAuthFlow(ApplicationRepository applicationRepository, UserRepository userRepository, JwtTokenService jwtTokenService, PasswordEncoder passwordEncoder, ScopeRepository scopeRepository) {
         this.applicationRepository = applicationRepository;
         this.userRepository = userRepository;
         this.jwtTokenService = jwtTokenService;
         this.passwordEncoder = passwordEncoder;
+        this.scopeRepository = scopeRepository;
     }
 
     protected void checkScope(String[] scopes, Application application) {
         Set<String> scopesAsString = application.getScopeList().stream().map(Scope::getName).collect(Collectors.toSet());
         boolean requestedScopesAreValid = Arrays.stream(scopes).anyMatch(scopesAsString::contains);
         if (!requestedScopesAreValid) {
-            throw new InvalidGrandException(String.format("The requested scopes %s are not available", scopes));
+            throw new InvalidGrandException(String.format("The requested scopes %s are not available", scopes.toString()));
         }
     }
 
     public User checkUser(String username, String password, String clientId, String ipAdress) {
         Optional<User> user = userRepository.findOneByEmail(username);
+
         User foundUser = user.orElseThrow(() -> new UserNotFoundException("Error checking user, Either passowrd, username or client-id does not match."));
         if (LOGGER.isDebugEnabled()) {
             LOGGER.debug("checkUser() called with: username = [{}], clientId = [{}], ipAdress = [{}]", forJava(username), forJava(clientId), forJava(ipAdress));
@@ -88,6 +93,6 @@ public abstract class OAuthFlow {
 
     public boolean needsUserPermissionForApp(User user, String clientId) {
         Application applicationByClientId = applicationRepository.findApplicationByClientId(clientId).orElseThrow();
-        return user.getApplications().contains(applicationByClientId) || applicationByClientId.isTrustworthy();
+        return !user.getApplications().contains(applicationByClientId) && !applicationByClientId.isTrustworthy();
     }
 }

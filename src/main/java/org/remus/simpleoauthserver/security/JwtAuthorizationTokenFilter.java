@@ -1,6 +1,7 @@
 package org.remus.simpleoauthserver.security;
 
 import io.jsonwebtoken.ExpiredJwtException;
+import io.jsonwebtoken.JwtException;
 import org.remus.simpleoauthserver.Configuration;
 import org.remus.simpleoauthserver.entity.ApplicationType;
 import org.remus.simpleoauthserver.service.JwtTokenService;
@@ -23,6 +24,9 @@ import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
+
+import static org.remus.simpleoauthserver.service.JwtTokenService.TokenType.ACCESS;
+import static org.remus.simpleoauthserver.service.JwtTokenService.TokenType.AUTH;
 
 @Component
 public class JwtAuthorizationTokenFilter extends OncePerRequestFilter {
@@ -68,7 +72,7 @@ public class JwtAuthorizationTokenFilter extends OncePerRequestFilter {
                     returnValue[0] = e.getSubject();
                     returnValue[1] = e.get("type",String.class);
                     return returnValue;
-                });
+                }, ACCESS);
                 username = claims[0];
                 applicationType = ApplicationType.valueOf(claims[1]);
 
@@ -76,6 +80,11 @@ public class JwtAuthorizationTokenFilter extends OncePerRequestFilter {
                 log.error("an error occurred during getting username from token", e);
             } catch (ExpiredJwtException e) {
                 log.warn("the token is expired and not valid anymore", e);
+                response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "Authentication Failed");
+                return;
+            } catch (JwtException e) {
+                log.warn("there was an error with the token, aborting");
+                response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "Authentication Failed");
                 return;
             }
         } else {

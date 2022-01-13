@@ -4,7 +4,9 @@ import org.apache.commons.lang3.StringUtils;
 import org.remus.simpleoauthserver.entity.Application;
 import org.remus.simpleoauthserver.entity.User;
 import org.remus.simpleoauthserver.repository.ApplicationRepository;
+import org.remus.simpleoauthserver.repository.ScopeRepository;
 import org.remus.simpleoauthserver.repository.UserRepository;
+import org.remus.simpleoauthserver.response.AccessTokenResponse;
 import org.remus.simpleoauthserver.service.ApplicationNotFoundException;
 import org.remus.simpleoauthserver.service.InvalidInputException;
 import org.remus.simpleoauthserver.service.JwtTokenService;
@@ -15,6 +17,9 @@ import org.springframework.security.web.util.UrlUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.util.MultiValueMap;
 
+import javax.persistence.EntityManager;
+import javax.transaction.Transactional;
+import java.util.Map;
 import java.util.Optional;
 
 import static org.owasp.encoder.Encode.forJava;
@@ -25,9 +30,17 @@ public class AuthorizationFlow extends OAuthFlow {
 
     public static final String CLIENT_ID = "client_id";
     private final Logger logger = LoggerFactory.getLogger(this.getClass());
+    private final EntityManager entityManager;
 
-    protected AuthorizationFlow(ApplicationRepository applicationRepository, UserRepository userRepository, JwtTokenService jwtTokenService, PasswordEncoder passwordEncoder) {
-        super(applicationRepository, userRepository, jwtTokenService, passwordEncoder);
+    protected AuthorizationFlow(
+            ApplicationRepository applicationRepository,
+            UserRepository userRepository,
+            JwtTokenService jwtTokenService,
+            PasswordEncoder passwordEncoder,
+            ScopeRepository scopeRepository,
+            EntityManager entityManager) {
+        super(applicationRepository, userRepository, jwtTokenService, passwordEncoder,scopeRepository);
+        this.entityManager = entityManager;
     }
 
 
@@ -80,11 +93,22 @@ public class AuthorizationFlow extends OAuthFlow {
         return checkedUser;
     }
 
-    public String createLoginToken(String userName) {
-        return jwtTokenService.createAuthorizationToken(userName);
+    public String createAuthorizationToken(String userName, Map<String,Object> data) {
+        return jwtTokenService.createToken(userName,data, JwtTokenService.TokenType.AUTH);
     }
 
-    public void exexute(MultiValueMap<String, String> body) {
-        // not yet implemented
+    public AccessTokenResponse execute(MultiValueMap<String, String> body) {
+        throw new UnsupportedOperationException();
     }
+
+    @Transactional
+    public void registerApplication(String clientId, String userName) {
+        User oneByEmail = userRepository.findOneByEmail(userName).orElseThrow(() -> new InvalidInputException("username not found"));
+        Application applicationByClientId = applicationRepository.findApplicationByClientId(clientId).orElseThrow(() -> new InvalidInputException("clientid not found"));
+        if (!oneByEmail.getApplications().contains(applicationByClientId)) {
+            oneByEmail.getApplications().add(applicationByClientId);
+            entityManager.persist(oneByEmail);
+        }
+    }
+
 }

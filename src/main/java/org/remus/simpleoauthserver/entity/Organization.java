@@ -4,8 +4,6 @@ import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
-import javax.persistence.OneToMany;
-import java.util.List;
 
 @Entity
 public class Organization {
@@ -13,9 +11,6 @@ public class Organization {
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)
     private Integer id;
-
-    @OneToMany
-    private List<User> user;
 
     private String name;
 
@@ -27,14 +22,6 @@ public class Organization {
 
     public void setId(Integer id) {
         this.id = id;
-    }
-
-    public List<User> getUser() {
-        return user;
-    }
-
-    public void setUser(List<User> user) {
-        this.user = user;
     }
 
     public String getName() {

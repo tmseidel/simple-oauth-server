@@ -6,6 +6,12 @@ public class LoginForm {
 
     private String password;
 
+    private String signedData;
+
+    public LoginForm(String signedData) {
+        this.signedData = signedData;
+    }
+
     public String getUserName() {
         return userName;
     }
@@ -20,5 +26,13 @@ public class LoginForm {
 
     public void setPassword(String password) {
         this.password = password;
+    }
+
+    public String getSignedData() {
+        return signedData;
+    }
+
+    public void setSignedData(String signedData) {
+        this.signedData = signedData;
     }
 }

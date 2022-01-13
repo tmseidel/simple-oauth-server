@@ -1,6 +1,8 @@
 package org.remus.simpleoauthserver.service;
 
 import io.jsonwebtoken.Claims;
+import io.jsonwebtoken.JwtBuilder;
+import io.jsonwebtoken.JwtParser;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
 import org.remus.simpleoauthserver.entity.ApplicationType;
@@ -9,19 +11,30 @@ import org.springframework.stereotype.Component;
 
 import java.util.Date;
 import java.util.HashMap;
+import java.util.Map;
 import java.util.function.Function;
 
 @Component
 public class JwtTokenService {
 
-    @Value("${jwt.expiration}")
-    private Long expiration;
+    public enum TokenType {
+        FORM,
+        ACCESS,
+        AUTH,
+        REFRESH
+    }
 
-    @Value("${jwt.short.expiration}")
-    private Long shortExpiration;
+    @Value("${jwt.authorization.auth.token.expiration}")
+    private Long accessTokenExpiration;
 
-    @Value("${jwt.long.expiration}")
-    private Long longExpiration;
+    @Value("${jwt.clientcredential.access.token.expiration}")
+    private Long authTokenExpiration;
+
+    @Value("${jwt.authorization.refresh.token.expiration}")
+    private Long refreshTokenExpiration;
+
+    @Value("${jwt.authorization.auth.token.expiration}")
+    private Long formSubmissionExpiration;
 
     private KeyService keyService;
 
@@ -29,79 +42,67 @@ public class JwtTokenService {
         this.keyService = keyService;
     }
 
-    public String createAccessToken(String subject, ApplicationType type, String[] scopeList) {
+    public String createToken(String subject, Map<String,Object> data, TokenType type) {
         final Date createdDate = new Date();
-        final Date expirationDate = calculateExpirationDate(createdDate);
-
-        return Jwts.builder()
-                .setClaims(new HashMap<>())
+        JwtBuilder jwtBuilder = Jwts.builder()
+                .setClaims(data)
                 .setSubject(subject)
-                .setIssuedAt(createdDate)
-                .setExpiration(expirationDate)
-                .signWith(SignatureAlgorithm.RS256, keyService.getPrivateKey())
-                .claim("scope", String.join(",",scopeList))
-                .claim("type", type)
-                .compact();
+                .setIssuedAt(createdDate);
+        switch (type) {
+            case AUTH:
+                jwtBuilder.setExpiration(calculateExpirationDate(authTokenExpiration))
+                        .signWith(SignatureAlgorithm.HS512, keyService.getAuthorizationTokenKey());
+                break;
+            case FORM:
+                jwtBuilder.setExpiration(calculateExpirationDate(formSubmissionExpiration))
+                        .signWith(SignatureAlgorithm.HS512, keyService.getFormTokenKey());
+                break;
+            case ACCESS:
+                jwtBuilder.setExpiration(calculateExpirationDate(accessTokenExpiration))
+                        .signWith(SignatureAlgorithm.RS256, keyService.getPrivateKey());
+                break;
+            case REFRESH:
+                jwtBuilder.setExpiration(calculateExpirationDate(refreshTokenExpiration))
+                        .signWith(SignatureAlgorithm.HS512, keyService.getRefrehTokenKey());
+                break;
+
+
+        }
+        return jwtBuilder.compact();
     }
 
-    public String createAuthorizationToken(String username) {
-        final Date createdDate = new Date();
-        final Date expirationDate = calculateShortExpirationDate(createdDate);
-
-        return Jwts.builder()
-                .setClaims(new HashMap<>())
-                .setSubject(username)
-                .setIssuedAt(createdDate)
-                .setExpiration(expirationDate)
-                .signWith(SignatureAlgorithm.RS256, keyService.getAuthorizationTokenKey())
-                .compact();
-    }
-    public String createRefreshToken(String username) {
-        final Date createdDate = new Date();
-        final Date expirationDate = calculateLongExpirationDate(createdDate);
-
-        return Jwts.builder()
-                .setClaims(new HashMap<>())
-                .setSubject(username)
-                .setIssuedAt(createdDate)
-                .setExpiration(expirationDate)
-                .signWith(SignatureAlgorithm.RS256, keyService.getRefrehTokenKey())
-                .compact();
+    private Date calculateExpirationDate(long expirationInSeconds) {
+        return new Date(new Date().getTime() + expirationInSeconds * 1000);
     }
 
-    private Date calculateExpirationDate(Date createdDate) {
-        return new Date(createdDate.getTime() + expiration * 1000);
-    }
-    private Date calculateShortExpirationDate(Date createdDate) {
-        return new Date(createdDate.getTime() + shortExpiration * 1000);
-    }
-
-    private Date calculateLongExpirationDate(Date createdDate) {
-        return new Date(createdDate.getTime() + longExpiration * 1000);
-    }
-
-    public String getUsernameFromToken(String token) {
-        return getClaimFromToken(token, Claims::getSubject);
-    }
-
-    public Date getExpirationDateFromToken(String token) {
-        return getClaimFromToken(token, Claims::getExpiration);
-    }
-
-    public <T> T getClaimFromToken(String token, Function<Claims, T> claimsResolver) {
-        final Claims claims = getAllClaimsFromToken(token);
+    public <T> T getClaimFromToken(String token, Function<Claims, T> claimsResolver, TokenType type) {
+        final Claims claims = getAllClaimsFromToken(token,type);
         return claimsResolver.apply(claims);
     }
 
-    private Claims getAllClaimsFromToken(String token) {
-        return Jwts.parser()
-                .setSigningKey(keyService.getPublicKey())
-                .parseClaimsJws(token)
+    public Claims getAllClaimsFromToken(String token, TokenType type) {
+        JwtParser parser = Jwts.parser();
+        switch (type) {
+            case FORM:
+                parser.setSigningKey(keyService.getFormTokenKey());
+                break;
+            case ACCESS:
+                parser.setSigningKey(keyService.getPublicKey());
+                break;
+            case AUTH:
+                parser.setSigningKey(keyService.getAuthorizationTokenKey());
+                break;
+            case REFRESH:
+                parser.setSigningKey(keyService.getRefrehTokenKey());
+                break;
+        }
+        return parser.parseClaimsJws(token)
                 .getBody();
     }
 
-    public boolean validateToken(String token) {
-        Claims claims = getAllClaimsFromToken(token);
+
+    public boolean validateToken(String token, TokenType type) {
+        Claims claims = getAllClaimsFromToken(token, type);
         return claims != null;
     }
 }

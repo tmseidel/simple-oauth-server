@@ -3,6 +3,7 @@ package org.remus.simpleoauthserver.entity;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 
 import javax.persistence.CollectionTable;
 import javax.persistence.Column;
@@ -54,6 +55,7 @@ public class User {
     private String email;
 
     @JsonProperty(access = JsonProperty.Access.WRITE_ONLY)
+    @JsonDeserialize(using = BCryptPasswordDeserializer.class )
     private String password;
 
     private boolean activated;
@@ -122,7 +124,6 @@ public class User {
         this.email = email;
     }
 
-    @ManyToOne(fetch = FetchType.EAGER)
     public Organization getOrganization() {
         return organization;
     }

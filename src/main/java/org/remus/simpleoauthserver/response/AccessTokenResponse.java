@@ -14,6 +14,9 @@ public class AccessTokenResponse {
     @JsonProperty("expires_in")
     private int expiration;
 
+    @JsonProperty("refresh_token")
+    private String refreshToken;
+
     public String getAccessToken() {
         return accessToken;
     }
@@ -36,5 +39,13 @@ public class AccessTokenResponse {
 
     public void setExpiration(int expiration) {
         this.expiration = expiration;
+    }
+
+    public String getRefreshToken() {
+        return refreshToken;
+    }
+
+    public void setRefreshToken(String refreshToken) {
+        this.refreshToken = refreshToken;
     }
 }
