@@ -1,4 +1,4 @@
-package org.remus.simpleoauthserver.flows;
+package org.remus.simpleoauthserver.grants;
 
 import org.apache.commons.lang3.StringUtils;
 import org.remus.simpleoauthserver.entity.Application;
@@ -23,14 +23,14 @@ import static org.remus.simpleoauthserver.controller.ValueExtractionUtil.extract
 import static org.remus.simpleoauthserver.service.JwtTokenService.TokenType.ACCESS;
 
 @Controller
-public class ClientCredentialsFlow extends OAuthFlow{
+public class ClientCredentialsGrant extends OAuthGrant {
 
     public static final String BASIC_WITH_WHITESPACE = "basic ";
 
     @Value("${jwt.clientcredential.access.token.expiration}")
     private Long expiration;
 
-    public ClientCredentialsFlow(ApplicationRepository applicationRepository, UserRepository userRepository, JwtTokenService jwtTokenService, PasswordEncoder passwordEncoder, ScopeRepository scopeRepository) {
+    public ClientCredentialsGrant(ApplicationRepository applicationRepository, UserRepository userRepository, JwtTokenService jwtTokenService, PasswordEncoder passwordEncoder, ScopeRepository scopeRepository) {
         super(applicationRepository, userRepository, jwtTokenService, passwordEncoder,scopeRepository);
     }
 

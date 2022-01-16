@@ -1,4 +1,4 @@
-package org.remus.simpleoauthserver.flows;
+package org.remus.simpleoauthserver.grants;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -16,29 +16,29 @@ import static org.mockito.Mockito.when;
 
 class FlowControllerTest {
 
-    private FlowController testee;
+    private GrantController testee;
 
     @BeforeEach
     public void setup() {
-        testee = new FlowController();
+        testee = new GrantController();
     }
 
     @Test
     void isClientCredentialFlow() {
         MultiValueMap<String, String> mock = mock(MultiValueMap.class);
-        when(mock.getFirst("grant_type")).thenReturn(FlowController.CLIENT_CREDENTIALS);
+        when(mock.getFirst("grant_type")).thenReturn(GrantController.CLIENT_CREDENTIALS);
 
-        assertTrue(testee.isClientCredentialFlow(mock));
-        assertFalse(testee.isAuthorizationFlow(mock));
+        assertTrue(testee.isClientCredentialGrant(mock));
+        assertFalse(testee.isAuthorizationGrant(mock));
     }
 
     @Test
     void isAuthorizationFlow() {
         MultiValueMap<String, String> mock = mock(MultiValueMap.class);
-        when(mock.getFirst("grant_type")).thenReturn(FlowController.AUTHORIZATION_CODE);
+        when(mock.getFirst("grant_type")).thenReturn(GrantController.AUTHORIZATION_CODE);
 
-        assertFalse(testee.isClientCredentialFlow(mock));
-        assertTrue(testee.isAuthorizationFlow(mock));
+        assertFalse(testee.isClientCredentialGrant(mock));
+        assertTrue(testee.isAuthorizationGrant(mock));
     }
 
     @Test

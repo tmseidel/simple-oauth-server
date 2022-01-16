@@ -23,7 +23,6 @@ public class TokenBin {
     @Column(nullable = false, length = 2048)
     private String token;
 
-
     @Column(nullable = false, length = 500)
     private String indexHelp;
 

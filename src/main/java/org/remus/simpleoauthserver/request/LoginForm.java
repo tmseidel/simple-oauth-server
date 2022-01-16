@@ -6,6 +6,8 @@ public class LoginForm {
 
     private String password;
 
+    private boolean rememberMe;
+
     private String signedData;
 
     public LoginForm(String signedData) {
@@ -34,5 +36,13 @@ public class LoginForm {
 
     public void setSignedData(String signedData) {
         this.signedData = signedData;
+    }
+
+    public boolean isRememberMe() {
+        return rememberMe;
+    }
+
+    public void setRememberMe(boolean rememberMe) {
+        this.rememberMe = rememberMe;
     }
 }

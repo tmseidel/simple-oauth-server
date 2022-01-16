@@ -1,4 +1,4 @@
-package org.remus.simpleoauthserver.flows;
+package org.remus.simpleoauthserver.grants;
 
 import org.remus.simpleoauthserver.controller.ValueExtractionUtil;
 import org.remus.simpleoauthserver.service.InvalidInputException;
@@ -15,18 +15,18 @@ import static org.owasp.encoder.Encode.forJava;
  * This controller is used in the Token-Endpoint to decide which Flow is in progress.
  */
 @Controller
-public class FlowController {
+public class GrantController {
 
     public static final String CLIENT_CREDENTIALS = "client_credentials";
     public static final String AUTHORIZATION_CODE = "authorization_code";
     private static final Set<String> VALID_GRANT_TYPES = Set.of(CLIENT_CREDENTIALS, AUTHORIZATION_CODE);
 
-    public boolean isClientCredentialFlow(MultiValueMap<String, String> data) {
+    public boolean isClientCredentialGrant(MultiValueMap<String, String> data) {
         String type = getGrantType(data);
         return CLIENT_CREDENTIALS.equals(type);
     }
 
-    public boolean isAuthorizationFlow(MultiValueMap<String, String> data) {
+    public boolean isAuthorizationGrant(MultiValueMap<String, String> data) {
         String type = getGrantType(data);
         return AUTHORIZATION_CODE.equals(type);
     }

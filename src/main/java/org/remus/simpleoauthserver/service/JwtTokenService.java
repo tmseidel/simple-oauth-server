@@ -24,17 +24,20 @@ public class JwtTokenService {
         REFRESH
     }
 
-    @Value("${jwt.authorization.auth.token.expiration}")
+    @Value("${jwt.clientcredential.access.token.expiration}")
     private Long accessTokenExpiration;
 
-    @Value("${jwt.clientcredential.access.token.expiration}")
+    @Value("${jwt.authorization.auth.token.expiration}")
     private Long authTokenExpiration;
 
     @Value("${jwt.authorization.refresh.token.expiration}")
     private Long refreshTokenExpiration;
 
-    @Value("${jwt.authorization.auth.token.expiration}")
+    @Value("${jwt.formsubmission.data.token.expiration}")
     private Long formSubmissionExpiration;
+
+    @Value("${jwt.issuer}")
+    private String issuer;
 
     private KeyService keyService;
 
@@ -47,6 +50,7 @@ public class JwtTokenService {
         JwtBuilder jwtBuilder = Jwts.builder()
                 .setClaims(data)
                 .setSubject(subject)
+                .setIssuer(issuer)
                 .setIssuedAt(createdDate);
         switch (type) {
             case AUTH:

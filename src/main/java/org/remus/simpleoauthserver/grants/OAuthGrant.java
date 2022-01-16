@@ -1,4 +1,4 @@
-package org.remus.simpleoauthserver.flows;
+package org.remus.simpleoauthserver.grants;
 
 import org.apache.commons.lang3.StringUtils;
 import org.remus.simpleoauthserver.entity.Application;
@@ -26,7 +26,7 @@ import java.util.stream.Collectors;
 
 import static org.owasp.encoder.Encode.forJava;
 
-public abstract class OAuthFlow {
+public abstract class OAuthGrant {
 
     private final ScopeRepository scopeRepository;
 
@@ -38,9 +38,9 @@ public abstract class OAuthFlow {
 
     protected PasswordEncoder passwordEncoder;
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(OAuthFlow.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(OAuthGrant.class);
 
-    protected OAuthFlow(ApplicationRepository applicationRepository, UserRepository userRepository, JwtTokenService jwtTokenService, PasswordEncoder passwordEncoder, ScopeRepository scopeRepository) {
+    protected OAuthGrant(ApplicationRepository applicationRepository, UserRepository userRepository, JwtTokenService jwtTokenService, PasswordEncoder passwordEncoder, ScopeRepository scopeRepository) {
         this.applicationRepository = applicationRepository;
         this.userRepository = userRepository;
         this.jwtTokenService = jwtTokenService;

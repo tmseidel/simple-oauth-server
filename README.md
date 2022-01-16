@@ -14,11 +14,13 @@ In addition it's way simpler than other OpenSource solutions like Keycloak achie
 * Provide Single-Sign-On (SSO) for all your applications.
 * Store all your data on your own infrastructure and don't be dependent from any cloud-provider or other 3rd party.
 
-## Goals of this project
-* OAuth compliant Authentication & Authorization Services
-* OpenId Connect
-* Simple, focus on key-features
-* Dev-friendly, configurable from console, well-integrated in any CI/CD environment
+The following RFCs are implemented:
+* [RFC6749 - OAuth 2.0](https://tools.ietf.org/html/rfc6749)
+* [RFC6750 - Bearer Token Usage](https://tools.ietf.org/html/rfc6750)
+* [RFC6819 - OAuth 2.0 Threat Model and Security Considerations](https://tools.ietf.org/html/rfc6819)
+* [RFC7009 - Token Revocation](https://datatracker.ietf.org/doc/html/rfc7009)
+* [RFC7662 - Token Introspection](https://datatracker.ietf.org/doc/html/rfc7662)
+
 
 ## Features
 * Support of the OAuth Authorization Flows

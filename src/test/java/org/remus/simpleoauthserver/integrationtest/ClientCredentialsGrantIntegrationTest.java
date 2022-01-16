@@ -33,7 +33,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 @TestPropertySource(
         locations = "classpath:application-integrationtest.properties")
 @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
-class ClientCredentialsFlowIntegrationTest extends BaseRest {
+class ClientCredentialsGrantIntegrationTest extends BaseRest {
 
     @Test
     @DisplayName("Checks if the default application privides a correct access token, we check the token with the public-key.")

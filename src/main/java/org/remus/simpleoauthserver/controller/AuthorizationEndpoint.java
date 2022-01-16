@@ -2,7 +2,7 @@ package org.remus.simpleoauthserver.controller;
 
 import org.remus.simpleoauthserver.entity.Application;
 import org.remus.simpleoauthserver.entity.User;
-import org.remus.simpleoauthserver.flows.AuthorizationFlow;
+import org.remus.simpleoauthserver.grants.AuthorizationGrant;
 import org.remus.simpleoauthserver.request.AuthorizeApplicationForm;
 import org.remus.simpleoauthserver.request.LoginForm;
 import org.remus.simpleoauthserver.response.ErrorResponse;
@@ -55,12 +55,12 @@ public class AuthorizationEndpoint {
 
     private final UserValidator userValidator;
 
-    private final AuthorizationFlow authFlow;
+    private final AuthorizationGrant authFlow;
 
     private final TokenHelper tokenHelper;
 
 
-    public AuthorizationEndpoint(UserValidator userValidator, LoginAttemptService loginAttemptService, AuthorizationFlow authFlow, TokenHelper tokenHelper) {
+    public AuthorizationEndpoint(UserValidator userValidator, LoginAttemptService loginAttemptService, AuthorizationGrant authFlow, TokenHelper tokenHelper) {
         this.userValidator = userValidator;
         this.loginAttemptService = loginAttemptService;
         this.authFlow = authFlow;

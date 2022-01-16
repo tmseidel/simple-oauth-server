@@ -1,8 +1,8 @@
 package org.remus.simpleoauthserver.controller;
 
-import org.remus.simpleoauthserver.flows.AuthorizationFlow;
-import org.remus.simpleoauthserver.flows.ClientCredentialsFlow;
-import org.remus.simpleoauthserver.flows.FlowController;
+import org.remus.simpleoauthserver.grants.AuthorizationGrant;
+import org.remus.simpleoauthserver.grants.ClientCredentialsGrant;
+import org.remus.simpleoauthserver.grants.GrantController;
 import org.remus.simpleoauthserver.response.AccessTokenResponse;
 import org.remus.simpleoauthserver.response.ErrorResponse;
 import org.remus.simpleoauthserver.service.ApplicationNotFoundException;
@@ -22,26 +22,26 @@ import javax.servlet.http.HttpServletRequest;
 @RestController
 public class TokenEndpoint {
 
-    private FlowController flowController;
+    private GrantController flowController;
 
-    private ClientCredentialsFlow clientCredentialsFlow;
+    private ClientCredentialsGrant clientCredentialsGrant;
 
-    private AuthorizationFlow authorizationFlow;
+    private AuthorizationGrant authorizationGrant;
 
-    public TokenEndpoint(FlowController flowController, ClientCredentialsFlow clientCredentialsFlow, AuthorizationFlow authorizationFlow) {
+    public TokenEndpoint(GrantController flowController, ClientCredentialsGrant clientCredentialsGrant, AuthorizationGrant authorizationGrant) {
         this.flowController = flowController;
-        this.clientCredentialsFlow = clientCredentialsFlow;
-        this.authorizationFlow = authorizationFlow;
+        this.clientCredentialsGrant = clientCredentialsGrant;
+        this.authorizationGrant = authorizationGrant;
     }
 
     @PostMapping(path = "/auth/oauth/token",
             produces = MediaType.APPLICATION_JSON_VALUE, consumes = MediaType.APPLICATION_FORM_URLENCODED_VALUE)
     public AccessTokenResponse acquireAccessToken(
             @RequestBody MultiValueMap<String, String> body, HttpServletRequest request) {
-        if (flowController.isClientCredentialFlow(body)) {
-            return clientCredentialsFlow.execute(body,request.getHeader("Authorization"));
-        } else if (flowController.isAuthorizationFlow(body)) {
-            return authorizationFlow.execute(body);
+        if (flowController.isClientCredentialGrant(body)) {
+            return clientCredentialsGrant.execute(body,request.getHeader("Authorization"));
+        } else if (flowController.isAuthorizationGrant(body)) {
+            return authorizationGrant.execute(body);
         }
         return new AccessTokenResponse();
 
