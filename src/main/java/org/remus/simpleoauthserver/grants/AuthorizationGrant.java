@@ -7,19 +7,19 @@ import org.remus.simpleoauthserver.entity.TokenBin;
 import org.remus.simpleoauthserver.entity.User;
 import org.remus.simpleoauthserver.repository.ApplicationRepository;
 import org.remus.simpleoauthserver.repository.ScopeRepository;
-import org.remus.simpleoauthserver.repository.TokenBinRepository;
 import org.remus.simpleoauthserver.repository.UserRepository;
 import org.remus.simpleoauthserver.response.AccessTokenResponse;
 import org.remus.simpleoauthserver.service.ApplicationNotFoundException;
 import org.remus.simpleoauthserver.service.InvalidInputException;
 import org.remus.simpleoauthserver.service.JwtTokenService;
+import org.remus.simpleoauthserver.service.TokenBinService;
 import org.remus.simpleoauthserver.service.UserNotFoundException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.util.UrlUtils;
-import org.springframework.stereotype.Service;
+import org.springframework.stereotype.Controller;
 import org.springframework.util.MultiValueMap;
 
 import javax.persistence.EntityManager;
@@ -31,16 +31,15 @@ import java.util.Optional;
 import static org.owasp.encoder.Encode.forJava;
 import static org.remus.simpleoauthserver.controller.ValueExtractionUtil.extractValue;
 
-@Service
+@Controller
 public class AuthorizationGrant extends OAuthGrant {
 
-    @Value("${jwt.clientcredential.access.token.expiration}")
-    private Long expiration;
 
-    public static final String CLIENT_ID = "client_id";
+
+
     private final Logger logger = LoggerFactory.getLogger(this.getClass());
     private final EntityManager entityManager;
-    private final TokenBinRepository tokenBinRepository;
+    private final TokenBinService tokenBinService;
 
     protected AuthorizationGrant(
             ApplicationRepository applicationRepository,
@@ -49,10 +48,10 @@ public class AuthorizationGrant extends OAuthGrant {
             PasswordEncoder passwordEncoder,
             ScopeRepository scopeRepository,
             EntityManager entityManager,
-            TokenBinRepository tokenBinRepository) {
+            TokenBinService tokenBinService) {
         super(applicationRepository, userRepository, jwtTokenService, passwordEncoder, scopeRepository);
         this.entityManager = entityManager;
-        this.tokenBinRepository = tokenBinRepository;
+        this.tokenBinService = tokenBinService;
     }
 
 
@@ -75,9 +74,6 @@ public class AuthorizationGrant extends OAuthGrant {
 
     }
 
-    public void validateAccessTokenRequest(MultiValueMap<String, String> requestParams) {
-        // not yet implemented
-    }
 
     public Application findApplication(MultiValueMap<String, String> requestParams) {
         String clientId = extractValue(requestParams, CLIENT_ID).orElseThrow();
@@ -110,45 +106,39 @@ public class AuthorizationGrant extends OAuthGrant {
     }
 
     @Transactional
-    public AccessTokenResponse execute(MultiValueMap<String, String> body) {
+    public AccessTokenResponse execute(MultiValueMap<String, String> body, String authorization) {
         String code = extractValue(body, "code").orElseThrow(() -> new InvalidInputException("code is missing"));
-        String clientId = extractValue(body, CLIENT_ID).orElseThrow(() -> new InvalidInputException("client_id is missing"));
+        String clientId = extractClientId(body,authorization);
+        String clientSecret = extractClientSecret(body,authorization);
         String redirectUrl = extractValue(body, "redirect_uri").orElseThrow();
-        String index = TokenBin.calculateIndex(code);
-        tokenBinRepository.findTokenBinByIndexHelp(index).stream()
-                .filter(e -> e.getToken().equals(code)).findAny().ifPresent(e -> {
+        if(tokenBinService.isTokenInvalidated(code)) {
             throw new InvalidInputException("The token was already used.");
-        });
+        }
+        if (StringUtils.isEmpty(clientSecret)) {
+            throw new InvalidInputException("No client secret found.");
+        }
+        Application application = applicationRepository.findApplicationByClientIdAndClientSecretAndActivated(clientId, clientSecret, true)
+                .orElseThrow(() -> new ApplicationNotFoundException("No application found"));
         Claims claims = jwtTokenService.getAllClaimsFromToken(code, JwtTokenService.TokenType.AUTH);
         // Check if the client-id is the same as in the authorization-request.
-        if (claims.get(CLIENT_ID,String.class) == null
-                || !claims.get(CLIENT_ID,String.class).equals(clientId)) {
+        if (claims.get(CLIENT_ID, String.class) == null
+                || !claims.get(CLIENT_ID, String.class).equals(clientId)) {
             throw new InvalidInputException("client_id not correct");
         }
-        if (claims.get("redirect_uri",String.class) == null
-                || !claims.get("redirect_uri",String.class).equals(redirectUrl)) {
+        if (claims.get("redirect_uri", String.class) == null
+                || !claims.get("redirect_uri", String.class).equals(redirectUrl)) {
             throw new InvalidInputException("redirect_uri not correct");
         }
         String userName = claims.getSubject();
-        User user = userRepository.findOneByEmail(userName).orElseThrow(() -> new UserNotFoundException(String.format("User %s not found",userName)));
-        Map<String,Object> tokenData = new HashMap<>();
-        tokenData.put("scope",claims.get("scope"));
+        User user = userRepository.findOneByEmail(userName).orElseThrow(() -> new UserNotFoundException(String.format("User %s not found", userName)));
+        Map<String, Object> tokenData = new HashMap<>();
+        tokenData.put("scope", claims.get("scope"));
         tokenData.put("organization_id", user.getOrganization().getId());
-        tokenData.put("given_name",user.getName());
-        String accessToken = jwtTokenService.createToken(userName, tokenData, JwtTokenService.TokenType.ACCESS);
-        String refreshToken = jwtTokenService.createToken(userName, tokenData, JwtTokenService.TokenType.REFRESH);
+        tokenData.put("given_name", user.getName());
+        tokenData.put("type",application.getApplicationType().name());
 
-        AccessTokenResponse response = new AccessTokenResponse();
-        response.setTokenType("Bearer");
-        response.setRefreshToken(refreshToken);
-        response.setAccessToken(accessToken);
-        response.setExpiration(Math.toIntExact(expiration));
-
-        TokenBin tokenBin = new TokenBin();
-        tokenBin.setToken(code);
-        tokenBin.setInvalidationDate(claims.getExpiration());
-        tokenBinRepository.save(tokenBin);
-
+        AccessTokenResponse response = createResponse(userName,tokenData);
+        tokenBinService.invalidateToken(code,claims.getExpiration());
         return response;
     }
 

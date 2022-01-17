@@ -19,7 +19,8 @@ public class GrantController {
 
     public static final String CLIENT_CREDENTIALS = "client_credentials";
     public static final String AUTHORIZATION_CODE = "authorization_code";
-    private static final Set<String> VALID_GRANT_TYPES = Set.of(CLIENT_CREDENTIALS, AUTHORIZATION_CODE);
+    public static final String REFRESH_TOKEN = "refresh_token";
+    private static final Set<String> VALID_GRANT_TYPES = Set.of(CLIENT_CREDENTIALS, AUTHORIZATION_CODE, REFRESH_TOKEN);
 
     public boolean isClientCredentialGrant(MultiValueMap<String, String> data) {
         String type = getGrantType(data);
@@ -29,6 +30,11 @@ public class GrantController {
     public boolean isAuthorizationGrant(MultiValueMap<String, String> data) {
         String type = getGrantType(data);
         return AUTHORIZATION_CODE.equals(type);
+    }
+
+    public boolean isRefrehTokenGrant(MultiValueMap<String, String> data) {
+        String type = getGrantType(data);
+        return REFRESH_TOKEN.equals(type);
     }
 
     private String getGrantType(MultiValueMap<String, String> data) {

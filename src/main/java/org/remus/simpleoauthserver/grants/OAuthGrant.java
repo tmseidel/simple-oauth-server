@@ -7,7 +7,10 @@ import org.remus.simpleoauthserver.entity.User;
 import org.remus.simpleoauthserver.repository.ApplicationRepository;
 import org.remus.simpleoauthserver.repository.ScopeRepository;
 import org.remus.simpleoauthserver.repository.UserRepository;
+import org.remus.simpleoauthserver.response.AccessTokenResponse;
+import org.remus.simpleoauthserver.response.TokenType;
 import org.remus.simpleoauthserver.service.InvalidGrandException;
+import org.remus.simpleoauthserver.service.InvalidInputException;
 import org.remus.simpleoauthserver.service.InvalidIpException;
 import org.remus.simpleoauthserver.service.JwtTokenService;
 import org.remus.simpleoauthserver.service.ScopeNotFoundException;
@@ -15,18 +18,27 @@ import org.remus.simpleoauthserver.service.UserLockedException;
 import org.remus.simpleoauthserver.service.UserNotFoundException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.util.MultiValueMap;
 
 import java.text.MessageFormat;
 import java.util.Arrays;
+import java.util.Base64;
+import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.regex.PatternSyntaxException;
 import java.util.stream.Collectors;
 
 import static org.owasp.encoder.Encode.forJava;
+import static org.remus.simpleoauthserver.controller.ValueExtractionUtil.extractValue;
 
 public abstract class OAuthGrant {
+
+    public static final String BASIC_WITH_WHITESPACE = "basic ";
+
+    public static final String CLIENT_ID = "client_id";
 
     private final ScopeRepository scopeRepository;
 
@@ -37,6 +49,9 @@ public abstract class OAuthGrant {
     protected JwtTokenService jwtTokenService;
 
     protected PasswordEncoder passwordEncoder;
+
+    @Value("${jwt.clientcredential.access.token.expiration}")
+    private Long expiration;
 
     private static final Logger LOGGER = LoggerFactory.getLogger(OAuthGrant.class);
 
@@ -95,4 +110,52 @@ public abstract class OAuthGrant {
         Application applicationByClientId = applicationRepository.findApplicationByClientId(clientId).orElseThrow();
         return !user.getApplications().contains(applicationByClientId) && !applicationByClientId.isTrustworthy();
     }
+
+    protected String extractClientSecret(MultiValueMap<String, String> data, String authorizationHeader) {
+        String clientSecret = null;
+        if (!StringUtils.isEmpty(authorizationHeader) && authorizationHeader.toLowerCase().startsWith(BASIC_WITH_WHITESPACE)) {
+            String s = new String(Base64.getDecoder().decode(authorizationHeader.toLowerCase().replaceFirst(BASIC_WITH_WHITESPACE,"")));
+            if (!StringUtils.isEmpty(s)) {
+                String[] split = s.split(":");
+                if (split.length == 2) {
+                    clientSecret = split[1];
+                }
+            }
+        }
+        if (clientSecret == null) {
+            clientSecret = extractValue(data, "client_secret").orElseThrow(() -> new InvalidInputException("No client_secret present"));
+        }
+        return clientSecret;
+    }
+
+    protected String extractClientId(MultiValueMap<String, String> data, String authorizationHeader) {
+        String clientId = null;
+        if (!StringUtils.isEmpty(authorizationHeader) && authorizationHeader.toLowerCase().startsWith(BASIC_WITH_WHITESPACE)) {
+            String s = new String(Base64.getDecoder().decode(authorizationHeader.toLowerCase().replaceFirst(BASIC_WITH_WHITESPACE,"")));
+            if (!StringUtils.isEmpty(s)) {
+                String[] split = s.split(":");
+                if (split.length == 2) {
+                    clientId = split[0];
+                }
+            }
+        }
+        if (clientId == null) {
+            clientId = extractValue(data, "client_id").orElseThrow(() -> new InvalidInputException("No client_id present"));
+        }
+        return clientId;
+    }
+
+   protected AccessTokenResponse createResponse(String userName, Map<String,Object> tokenData) {
+        String accessToken = jwtTokenService.createToken(userName, tokenData, JwtTokenService.TokenType.ACCESS);
+        String refreshToken = jwtTokenService.createToken(userName, tokenData, JwtTokenService.TokenType.REFRESH);
+        AccessTokenResponse response = new AccessTokenResponse();
+        response.setTokenType(TokenType.BEARER.getStringValue());
+        response.setRefreshToken(refreshToken);
+        response.setAccessToken(accessToken);
+        response.setExpiration(Math.toIntExact(expiration));
+        return response;
+    }
+
+
+
 }

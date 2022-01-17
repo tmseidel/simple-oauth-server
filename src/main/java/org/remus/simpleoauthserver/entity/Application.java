@@ -41,7 +41,6 @@ public class Application {
     private boolean trustworthy;
 
     @Column(unique = true, nullable = false)
-    @JsonProperty(access = JsonProperty.Access.WRITE_ONLY)
     private String clientSecret;
 
     @ManyToMany(fetch = FetchType.EAGER)

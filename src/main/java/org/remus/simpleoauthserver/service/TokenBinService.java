@@ -27,4 +27,6 @@ public class TokenBinService {
         List<TokenBin> tokenBinByIndexHelp = tokenBinRepository.findTokenBinByIndexHelp(TokenBin.calculateIndex(token));
         return tokenBinByIndexHelp.stream().anyMatch(e -> e.getToken().equals(token));
     }
+
+
 }

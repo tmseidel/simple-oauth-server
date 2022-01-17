@@ -83,7 +83,7 @@ public class JwtAuthorizationTokenFilter extends OncePerRequestFilter {
                 response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "Authentication Failed");
                 return;
             } catch (JwtException e) {
-                log.warn("there was an error with the token, aborting");
+                log.warn("there was an error with the token, aborting",e);
                 response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "Authentication Failed");
                 return;
             }
