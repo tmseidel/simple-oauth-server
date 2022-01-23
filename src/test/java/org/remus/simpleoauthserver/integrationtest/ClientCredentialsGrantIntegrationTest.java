@@ -12,6 +12,7 @@ import org.junit.jupiter.api.Order;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestMethodOrder;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.remus.simpleoauthserver.entity.ApplicationType;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.TestPropertySource;
@@ -23,6 +24,7 @@ import java.util.Map;
 import static io.restassured.RestAssured.given;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.owasp.encoder.Encode.forJavaScript;
 
 /**
  * This test shows the functionality of the Client Credential Flow
@@ -48,10 +50,14 @@ class ClientCredentialsGrantIntegrationTest extends BaseRest {
     @DisplayName("This test creates a new application with a defined scope and tests the Client-Credential Flow")
     @Order(2)
     void createNewAppForCredentialsFlowIntegration() {
-        int scopeId = createNewScope("userdata.write");
+        int scopeId = createNewScope("userdata.write", "The right to write some data");
         ExtractableResponse<Response> answer;
-        int applicationId = registerNewApi("Fq09P3T2YiXST8b6WJ54QO1LWDDUG7SM");
-        assignScopeToApi(scopeId, applicationId);
+        int applicationId = registerNewApi(
+                "Fq09P3T2YiXST8b6WJ54QO1LWDDUG7SM",
+                "uIFeAD0OK56WD1N3BkhLjX9HGOoCNULsxv724TyYdHVpqPBEtQ8RZ",
+                "My super API",
+                ApplicationType.M2M);
+        assignScopesToApi(applicationId,scopeId);
 
         // Step 4: Get the access token for our new application with the new scope
         String tokenRequestUrl = "/auth/oauth/token";
@@ -109,39 +115,8 @@ class ClientCredentialsGrantIntegrationTest extends BaseRest {
         assertEquals("invalid_client", error);
     }
 
-    private void assignScopeToApi(int scopeId, int applicationId) {
-        ExtractableResponse<Response> answer;
-        // Step3: Assigning the scope to the registered application:
-        String assignScopeListUri = "/auth/admin/data/applications/" + applicationId + "/scopeList";
-        String uriList = getBaseUrl() + "/auth/admin/data/scopes/" + scopeId;
-        answer = given().log().all().header(URI_LIST).header(auth(accessToken)).body(uriList).put(assignScopeListUri).then().extract();
-    }
 
-    private int registerNewApi(String clientId) {
-        ExtractableResponse<Response> answer;
-        // Step2: Registering the API
-        String newApplicationUrl = "/auth/admin/data/applications";
-        String createAppJson = "{\n" +
-                "    \"name\": \"My Super-API\",\n" +
-                "    \"clientId\": \"" + clientId + "\",\n" +
-                "    \"clientSecret\": \"uIFeAD0OK56WD1N3BkhLjX9HGOoCNULsxv724TyYdHVpqPBEtQ8RZ\",\n" +
-                "    \"activated\": true,\n" +
-                "    \"applicationType\": \"M2M\"\n" +
-                "}";
-        answer = given().log().all().header(auth(accessToken)).header(JSON).body(createAppJson).post(newApplicationUrl).then().extract();
-        int applicationId = answer.path("id");
-        return applicationId;
-    }
 
-    private int createNewScope(String scopeName) {
-        // Step1: Create the scope that is used for the API we want to secure
-        String newScopeUrl = "/auth/admin/data/scopes";
-        String createScopeJson = "{\n" +
-                "    \"name\" : \"" + scopeName + "\",\n" +
-                "    \"description\" : \"Right to write user-data\"\n" +
-                "}";
-        ExtractableResponse<Response> answer = given().log().all().header(auth(accessToken)).header(JSON).body(createScopeJson).post(newScopeUrl).then().extract();
-        int scopeId = answer.path("id");
-        return scopeId;
-    }
+
+
 }

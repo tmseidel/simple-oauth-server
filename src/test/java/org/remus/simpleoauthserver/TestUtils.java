@@ -10,6 +10,38 @@ import java.util.Set;
 
 public class TestUtils {
 
+    public static class TestUser {
+        private final String userName;
+        private final String passWord;
+        private final String clientId;
+        private final String[] scope;
+
+        public TestUser(String userName, String passWord, String clientId, String... scope) {
+            this.userName = userName;
+            this.passWord = passWord;
+            this.clientId = clientId;
+            this.scope = scope;
+        }
+
+        public String getUserName() {
+            return userName;
+        }
+
+        public String getPassWord() {
+            return passWord;
+        }
+
+        public String getClientId() {
+            return clientId;
+        }
+
+        public String[] getScope() {
+            return scope;
+        }
+    }
+
+
+
     public static Set<Scope> createScope(String name) {
         HashSet<Scope> scopes = new HashSet<>();
         Scope scope = new Scope();

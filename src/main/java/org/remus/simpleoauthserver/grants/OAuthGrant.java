@@ -5,7 +5,6 @@ import org.remus.simpleoauthserver.entity.Application;
 import org.remus.simpleoauthserver.entity.Scope;
 import org.remus.simpleoauthserver.entity.User;
 import org.remus.simpleoauthserver.repository.ApplicationRepository;
-import org.remus.simpleoauthserver.repository.ScopeRepository;
 import org.remus.simpleoauthserver.repository.UserRepository;
 import org.remus.simpleoauthserver.response.AccessTokenResponse;
 import org.remus.simpleoauthserver.response.TokenType;
@@ -40,7 +39,9 @@ public abstract class OAuthGrant {
 
     public static final String CLIENT_ID = "client_id";
 
-    private final ScopeRepository scopeRepository;
+    public static final String REDIRECT_URI = "redirect_uri";
+    public static final String CODE = "code";
+    public static final String SCOPE = "scope";
 
     protected ApplicationRepository applicationRepository;
 
@@ -55,19 +56,18 @@ public abstract class OAuthGrant {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(OAuthGrant.class);
 
-    protected OAuthGrant(ApplicationRepository applicationRepository, UserRepository userRepository, JwtTokenService jwtTokenService, PasswordEncoder passwordEncoder, ScopeRepository scopeRepository) {
+    protected OAuthGrant(ApplicationRepository applicationRepository, UserRepository userRepository, JwtTokenService jwtTokenService, PasswordEncoder passwordEncoder) {
         this.applicationRepository = applicationRepository;
         this.userRepository = userRepository;
         this.jwtTokenService = jwtTokenService;
         this.passwordEncoder = passwordEncoder;
-        this.scopeRepository = scopeRepository;
     }
 
     protected void checkScope(String[] scopes, Application application) {
         Set<String> scopesAsString = application.getScopeList().stream().map(Scope::getName).collect(Collectors.toSet());
         boolean requestedScopesAreValid = Arrays.stream(scopes).anyMatch(scopesAsString::contains);
         if (!requestedScopesAreValid) {
-            throw new InvalidGrandException(String.format("The requested scopes %s are not available", scopes.toString()));
+            throw new InvalidGrandException(String.format("The requested scopes %s are not available", scopes));
         }
     }
 
@@ -140,7 +140,7 @@ public abstract class OAuthGrant {
             }
         }
         if (clientId == null) {
-            clientId = extractValue(data, "client_id").orElseThrow(() -> new InvalidInputException("No client_id present"));
+            clientId = extractValue(data, CLIENT_ID).orElseThrow(() -> new InvalidInputException("No client_id present"));
         }
         return clientId;
     }

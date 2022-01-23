@@ -2,7 +2,6 @@ package org.remus.simpleoauthserver.grants;
 
 import org.remus.simpleoauthserver.entity.Application;
 import org.remus.simpleoauthserver.repository.ApplicationRepository;
-import org.remus.simpleoauthserver.repository.ScopeRepository;
 import org.remus.simpleoauthserver.repository.UserRepository;
 import org.remus.simpleoauthserver.response.AccessTokenResponse;
 import org.remus.simpleoauthserver.service.ApplicationNotFoundException;
@@ -20,8 +19,8 @@ import static org.remus.simpleoauthserver.controller.ValueExtractionUtil.extract
 public class ClientCredentialsGrant extends OAuthGrant {
 
 
-    public ClientCredentialsGrant(ApplicationRepository applicationRepository, UserRepository userRepository, JwtTokenService jwtTokenService, PasswordEncoder passwordEncoder, ScopeRepository scopeRepository) {
-        super(applicationRepository, userRepository, jwtTokenService, passwordEncoder,scopeRepository);
+    public ClientCredentialsGrant(ApplicationRepository applicationRepository, UserRepository userRepository, JwtTokenService jwtTokenService, PasswordEncoder passwordEncoder) {
+        super(applicationRepository, userRepository, jwtTokenService, passwordEncoder);
     }
 
     public AccessTokenResponse execute(MultiValueMap<String, String> data, String authorizationHeader) {
@@ -32,7 +31,6 @@ public class ClientCredentialsGrant extends OAuthGrant {
         Application application = applicationRepository.findApplicationByClientIdAndClientSecretAndActivated(clientId, clientSecret, true)
                 .orElseThrow(() -> new ApplicationNotFoundException(String.format("The application with client_id %s was not found",clientId)));
         checkScope(scopes, application);
-        AccessTokenResponse returnValue = new AccessTokenResponse();
         Map<String,Object> claims = new HashMap<>();
         claims.put("type",application.getApplicationType().name());
         claims.put("scope",String.join(",",scopes));

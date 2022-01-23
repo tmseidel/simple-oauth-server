@@ -118,6 +118,7 @@ public class KeyService {
             keys.setRefreshTokenKey(RandomStringUtils.random(32, true, true));
             keys.setFormTokenKey(RandomStringUtils.random(32, true, true));
             new ObjectMapper().writeValue(fos,keys);
+            loadJWTKeys();
         }
 
     }
