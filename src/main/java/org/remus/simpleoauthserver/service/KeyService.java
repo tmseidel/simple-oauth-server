@@ -4,7 +4,9 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
+import org.springframework.web.bind.annotation.PostMapping;
 
+import javax.annotation.PostConstruct;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -63,6 +65,10 @@ public class KeyService {
     @Value("${jwt.keys.location}")
     private String jwtKeysLocation;
 
+    @Value("${files.basepath}")
+    private String basePath;
+
+
     private PrivateKey privateKey;
 
     private PublicKey publicKey;
@@ -74,6 +80,15 @@ public class KeyService {
             loadJWTKeys();
         }
         return jwtKeys.getAuthorizationToken();
+    }
+
+    @PostConstruct
+    public void init() {
+        try {
+            Files.createDirectories(Paths.get(basePath));
+        } catch (IOException e) {
+            throw new IllegalStateException("Could not create a needed directory");
+        }
     }
 
     public String getRefrehTokenKey() {
