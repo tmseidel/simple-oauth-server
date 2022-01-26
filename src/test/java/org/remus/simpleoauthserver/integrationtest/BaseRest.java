@@ -243,7 +243,12 @@ public abstract class BaseRest {
         given().log().all().header(URI_LIST).header(auth(accessToken)).body(uriList).put(assignApplicationsListUri).then().extract();
     }
 
-    protected String grabAccessToken(TestUtils.TestUser user) {
+    /**
+     * Loads and submits the login-form
+     * @param user
+     * @return if successful the auth-token is returned, otherwise the html of the loaded website
+     */
+    protected String loadAndSubmitLoginForm(TestUtils.TestUser user) {
         try (final WebClient webClient = new WebClient(BrowserVersion.BEST_SUPPORTED)) {
             webClient.getCache().setMaxSize(0);
             webClient.getOptions().setThrowExceptionOnFailingStatusCode(false);
@@ -253,6 +258,7 @@ public abstract class BaseRest {
             webClient.getOptions().setCssEnabled(false);
             webClient.getOptions().setJavaScriptEnabled(true);
             webClient.getOptions().setRedirectEnabled(false);
+            webClient.addRequestHeader("Accept-Language" , "en");
 
             // Get the first page
             HtmlPage page1 = webClient.getPage(buildLoginPage(user));
@@ -278,14 +284,10 @@ public abstract class BaseRest {
             // Now submit the form by clicking the button and get back the second page.
             final Page page2 = button.click();
             Optional<String> first = page2.getWebResponse().getResponseHeaders().stream().filter(e -> "Location".equals(e.getName())).map(NameValuePair::getValue).findFirst();
-            String s = first.orElse(null);
-            new URL(s).getQuery();
-            List<org.apache.http.NameValuePair> parse = URLEncodedUtils.parse(s, StandardCharsets.UTF_8);
-            String token = parse.get(0).getValue();
-            //System.out.println(page2.getDocumentURI());
-           return token;
-
-
+            return first.map(e -> {
+                List<org.apache.http.NameValuePair> parse = URLEncodedUtils.parse(e, StandardCharsets.UTF_8);
+                return parse.get(0).getValue();
+            }).orElse(page2.getWebResponse().getContentAsString());
         } catch (IOException e) {
             throw new IllegalStateException("Error while grabbing access token",e);
         }

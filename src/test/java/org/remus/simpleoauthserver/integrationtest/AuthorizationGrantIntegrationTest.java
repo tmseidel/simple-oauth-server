@@ -22,6 +22,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 import static io.restassured.RestAssured.given;
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 
@@ -83,7 +84,7 @@ class AuthorizationGrantIntegrationTest extends BaseRest {
         // Step1: Login via Html-Form with username and password
         TestUtils.TestUser testUser = new TestUtils.TestUser("test@example.org", "mypassword", "jp98GC73RJ2VBqZB", new String[]{"myapi.write"});
         // Step2: "Grab" the access token from response-header.
-        accessToken = grabAccessToken(testUser);
+        accessToken = loadAndSubmitLoginForm(testUser);
         assertNotNull(accessToken);
 
         // Step3: Get the access token for our user with the new scope
@@ -140,7 +141,7 @@ class AuthorizationGrantIntegrationTest extends BaseRest {
     void invalidRedirectUri() {
         TestUtils.TestUser testUser = new TestUtils.TestUser("test@example.org", "mypassword", "jp98GC73RJ2VBqZB", new String[]{"myapi.write"});
         // Step2: "Grab" the access token from response-header.
-        String s = grabAccessToken(testUser);
+        String s = loadAndSubmitLoginForm(testUser);
         assertNotNull(s);
 
         // Step3: Get the access token for our user with the new scope
@@ -157,5 +158,19 @@ class AuthorizationGrantIntegrationTest extends BaseRest {
                 .statusCode(400);
         assertEquals("invalid_client",answer.path("error"));
         assertNotNull(answer.path("error_description"));
+    }
+
+    @Test
+    @Order(4)
+    /**
+     * This test ensures that the server will reject a request if
+     * the scope is unknown.
+     */
+    void invalidScope() {
+        TestUtils.TestUser testUser = new TestUtils.TestUser("test@example.org", "mypassword", "jp98GC73RJ2VBqZB", new String[]{"unknown.scope"});
+        // Step2: "Grab" the access token from response-header.
+        String webResponse = loadAndSubmitLoginForm(testUser);
+
+        assertThat(webResponse).contains("User has not sufficient authorizations to login");
     }
 }
