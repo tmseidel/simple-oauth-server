@@ -114,7 +114,7 @@ public abstract class OAuthGrant {
     protected String extractClientSecret(MultiValueMap<String, String> data, String authorizationHeader) {
         String clientSecret = null;
         if (!StringUtils.isEmpty(authorizationHeader) && authorizationHeader.toLowerCase().startsWith(BASIC_WITH_WHITESPACE)) {
-            String s = new String(Base64.getDecoder().decode(authorizationHeader.toLowerCase().replaceFirst(BASIC_WITH_WHITESPACE,"")));
+            String s = new String(Base64.getDecoder().decode(authorizationHeader.replaceFirst("(?i)" + BASIC_WITH_WHITESPACE,"")));
             if (!StringUtils.isEmpty(s)) {
                 String[] split = s.split(":");
                 if (split.length == 2) {
@@ -131,7 +131,7 @@ public abstract class OAuthGrant {
     protected String extractClientId(MultiValueMap<String, String> data, String authorizationHeader) {
         String clientId = null;
         if (!StringUtils.isEmpty(authorizationHeader) && authorizationHeader.toLowerCase().startsWith(BASIC_WITH_WHITESPACE)) {
-            String s = new String(Base64.getDecoder().decode(authorizationHeader.toLowerCase().replaceFirst(BASIC_WITH_WHITESPACE,"")));
+            String s = new String(Base64.getDecoder().decode(authorizationHeader.replaceFirst("(?i)" + BASIC_WITH_WHITESPACE,"")));
             if (!StringUtils.isEmpty(s)) {
                 String[] split = s.split(":");
                 if (split.length == 2) {

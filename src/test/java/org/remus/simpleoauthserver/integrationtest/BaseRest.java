@@ -36,6 +36,7 @@ import java.security.KeyFactory;
 import java.security.PublicKey;
 import java.security.spec.X509EncodedKeySpec;
 import java.util.Arrays;
+import java.util.Base64;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -101,16 +102,20 @@ public abstract class BaseRest {
         }
     }
 
+    private static Header basicAuthHeader() {
+        String authStr = clientId + ":" + clientSecret;
+        String base64Creds = Base64.getEncoder().encodeToString(authStr.getBytes());
+        return new Header("Authorization","Basic " +base64Creds);
+    }
+
     void acquireAccessToken() {
         String tokenRequestUrl = "/auth/oauth/token";
 
         Map<String, String> formParams = new HashMap<>();
         formParams.put("grant_type", "client_credentials");
-        formParams.put("client_id", clientId);
-        formParams.put("client_secret", clientSecret);
         formParams.put("scope", "data.superadmin");
 
-        ExtractableResponse<Response> answer = given().log().all().header(FORM_URLENCODED).formParams(formParams).post(tokenRequestUrl).then().extract();
+        ExtractableResponse<Response> answer = given().log().all().header(FORM_URLENCODED).header(basicAuthHeader()).formParams(formParams).post(tokenRequestUrl).then().extract();
 
         answer.response().then().assertThat()
                 .statusCode(200);
