@@ -1,7 +1,5 @@
 package org.remus.simpleoauthserver.entity;
 
-import com.fasterxml.jackson.annotation.JsonProperty;
-
 import javax.persistence.Column;
 import javax.persistence.ElementCollection;
 import javax.persistence.Entity;

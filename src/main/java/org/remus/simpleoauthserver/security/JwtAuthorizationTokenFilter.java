@@ -26,7 +26,6 @@ import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 
 import static org.remus.simpleoauthserver.service.JwtTokenService.TokenType.ACCESS;
-import static org.remus.simpleoauthserver.service.JwtTokenService.TokenType.AUTH;
 
 @Component
 public class JwtAuthorizationTokenFilter extends OncePerRequestFilter {

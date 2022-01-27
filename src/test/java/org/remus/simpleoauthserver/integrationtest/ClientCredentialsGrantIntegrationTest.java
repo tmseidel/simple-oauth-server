@@ -24,7 +24,6 @@ import java.util.Map;
 import static io.restassured.RestAssured.given;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.owasp.encoder.Encode.forJavaScript;
 
 /**
  * This test shows the functionality of the Client Credential Flow

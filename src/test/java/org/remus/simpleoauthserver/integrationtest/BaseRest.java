@@ -29,7 +29,6 @@ import org.springframework.boot.web.server.LocalServerPort;
 
 import java.io.IOException;
 import java.lang.reflect.Type;
-import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -248,7 +247,7 @@ public abstract class BaseRest {
      * @param user
      * @return if successful the auth-token is returned, otherwise the html of the loaded website
      */
-    protected String loadAndSubmitLoginForm(TestUtils.TestUser user) {
+    protected String loadAndSubmitLoginForm(TestUtils.TestUser user, boolean with2ndPage) {
         try (final WebClient webClient = new WebClient(BrowserVersion.BEST_SUPPORTED)) {
             webClient.getCache().setMaxSize(0);
             webClient.getOptions().setThrowExceptionOnFailingStatusCode(false);
@@ -282,7 +281,12 @@ public abstract class BaseRest {
             pass.type(user.getPassWord());
 
             // Now submit the form by clicking the button and get back the second page.
-            final Page page2 = button.click();
+
+            Page page2 = button.click();
+            if (with2ndPage) {
+                final DomElement acceptButton = ((HtmlPage)page2).getElementsByTagName("button").get(0);
+                page2 = acceptButton.click();
+            }
             Optional<String> first = page2.getWebResponse().getResponseHeaders().stream().filter(e -> "Location".equals(e.getName())).map(NameValuePair::getValue).findFirst();
             return first.map(e -> {
                 List<org.apache.http.NameValuePair> parse = URLEncodedUtils.parse(e, StandardCharsets.UTF_8);

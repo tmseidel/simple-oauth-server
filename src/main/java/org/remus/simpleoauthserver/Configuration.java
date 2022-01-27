@@ -15,13 +15,8 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.context.request.WebRequest;
-import org.springframework.web.servlet.LocaleResolver;
 import org.springframework.web.servlet.config.annotation.CorsRegistry;
-import org.springframework.web.servlet.i18n.AcceptHeaderLocaleResolver;
-import org.springframework.web.servlet.i18n.SessionLocaleResolver;
 
-import java.util.Arrays;
-import java.util.Locale;
 import java.util.Map;
 
 @org.springframework.context.annotation.Configuration

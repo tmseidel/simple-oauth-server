@@ -84,7 +84,7 @@ class AuthorizationGrantIntegrationTest extends BaseRest {
         // Step1: Login via Html-Form with username and password
         TestUtils.TestUser testUser = new TestUtils.TestUser("test@example.org", "mypassword", "jp98GC73RJ2VBqZB", new String[]{"myapi.write"});
         // Step2: "Grab" the access token from response-header.
-        accessToken = loadAndSubmitLoginForm(testUser);
+        accessToken = loadAndSubmitLoginForm(testUser,false);
         assertNotNull(accessToken);
 
         // Step3: Get the access token for our user with the new scope
@@ -141,7 +141,7 @@ class AuthorizationGrantIntegrationTest extends BaseRest {
     void invalidRedirectUri() {
         TestUtils.TestUser testUser = new TestUtils.TestUser("test@example.org", "mypassword", "jp98GC73RJ2VBqZB", new String[]{"myapi.write"});
         // Step2: "Grab" the access token from response-header.
-        String s = loadAndSubmitLoginForm(testUser);
+        String s = loadAndSubmitLoginForm(testUser,false);
         assertNotNull(s);
 
         // Step3: Get the access token for our user with the new scope
@@ -167,10 +167,67 @@ class AuthorizationGrantIntegrationTest extends BaseRest {
      * the scope is unknown.
      */
     void invalidScope() {
-        TestUtils.TestUser testUser = new TestUtils.TestUser("test@example.org", "mypassword", "jp98GC73RJ2VBqZB", new String[]{"unknown.scope"});
+        var testUser = new TestUtils.TestUser("test@example.org", "mypassword", "jp98GC73RJ2VBqZB", new String[]{"unknown.scope"});
         // Step2: "Grab" the access token from response-header.
-        String webResponse = loadAndSubmitLoginForm(testUser);
+        String webResponse = loadAndSubmitLoginForm(testUser,false);
 
         assertThat(webResponse).contains("User has not sufficient authorizations to login");
+    }
+
+    @Test
+    @Order(5)
+    /**
+     * This test ensures that the server will reject a request if
+     * the scope is unknown.
+     */
+    void unknownUser() {
+        var testUser = new TestUtils.TestUser("unknown@example.org", "mypassword", "jp98GC73RJ2VBqZB", new String[]{"myapi.write"});
+        // Step2: "Grab" the access token from response-header.
+        String webResponse = loadAndSubmitLoginForm(testUser,false);
+
+        assertThat(webResponse).contains("User was not found or password not correct");
+    }
+
+
+    @Test
+    @Order(6)
+    /**
+     * This test ensures that the server will reject a request if
+     * the scope is unknown.
+     */
+    void wrongPassword() {
+        var testUser = new TestUtils.TestUser("test@example.org", "wrongPassword", "jp98GC73RJ2VBqZB", new String[]{"myapi.write"});
+        // Step2: "Grab" the access token from response-header.
+        String webResponse = loadAndSubmitLoginForm(testUser,false);
+
+        assertThat(webResponse).contains("User was not found or password not correct");
+    }
+    @Test
+    @Order(7)
+    /**
+     * Creating a new user that has to authorize the requesting application
+     */
+    void assignApplication() {
+        var secondUser = createUser("Jane Doe", "jane@example.org", "hello");
+        assignUserToOrganization(myOrg, secondUser);
+        assignScopesToUser(secondUser, scope1, scope2);
+
+        TestUtils.TestUser testUser = new TestUtils.TestUser("jane@example.org", "hello", "jp98GC73RJ2VBqZB", new String[]{"myapi.write"});
+        // Step2: "Grab" the access token from response-header.
+        String newUserAccessToken = loadAndSubmitLoginForm(testUser,true);
+
+        String tokenRequestUrl = "/auth/oauth/token";
+        Map<String, String> formParams = new HashMap<>();
+        formParams.put("grant_type", "authorization_code");
+        formParams.put("client_id", "jp98GC73RJ2VBqZB");
+        formParams.put("client_secret", "9OZhG274HP16FRQg58f0IADSQNV3UFiL");
+        formParams.put("code", newUserAccessToken);
+        formParams.put("redirect_uri", "http://localhost:8085/myApplication/auth");
+
+        ExtractableResponse<Response> answer = given().log().all().header(FORM_URLENCODED).formParams(formParams).post(tokenRequestUrl).then().extract();
+        answer.response().then().assertThat()
+                .statusCode(200);
+        String authToken = answer.path("access_token");
+        assertNotNull(authToken);
     }
 }
