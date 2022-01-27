@@ -245,6 +245,14 @@ public abstract class BaseRest {
         given().log().all().header(URI_LIST).header(auth(accessToken)).body(uriList).put(assignApplicationsListUri).then().extract();
     }
 
+    protected void setIpRestriction(int myOrg, String restriction) {
+        String url = "auth/admin/data/organizations/" + myOrg;
+        String json = "{\n" +
+                "    \"ipRestriction\": "+quote(restriction) +"\n" +
+        "}";
+        given().log().all().header(auth(accessToken)).header(JSON).body(json).patch(url).then().extract();
+    }
+
     /**
      * Loads and submits the login-form
      * @param user

@@ -180,6 +180,28 @@ class AuthorizationGrantIntegrationTest extends BaseRest {
      * This test ensures that the server will reject a request if
      * the scope is unknown.
      */
+    void invalidIp() {
+        var testUser = new TestUtils.TestUser("test@example.org", "mypassword", "jp98GC73RJ2VBqZB", new String[]{"myapi.write"});
+        // Step2: We configure the organization that only valid login-ips are starting with 192.168.*
+        setIpRestriction(myOrg,"192\\.168\\..+");
+        String webResponse = null;
+        try {
+            webResponse = loadAndSubmitLoginForm(testUser,false);
+        } finally {
+            setIpRestriction(myOrg,null);
+        }
+
+        assertThat(webResponse).contains("User is not allowed to login from this IP");
+    }
+
+
+
+    @Test
+    @Order(6)
+    /**
+     * This test ensures that the server will reject a request if
+     * the scope is unknown.
+     */
     void unknownUser() {
         var testUser = new TestUtils.TestUser("unknown@example.org", "mypassword", "jp98GC73RJ2VBqZB", new String[]{"myapi.write"});
         // Step2: "Grab" the access token from response-header.
@@ -190,7 +212,7 @@ class AuthorizationGrantIntegrationTest extends BaseRest {
 
 
     @Test
-    @Order(6)
+    @Order(7)
     /**
      * This test ensures that the server will reject a request if
      * the scope is unknown.
@@ -203,7 +225,7 @@ class AuthorizationGrantIntegrationTest extends BaseRest {
         assertThat(webResponse).contains("User was not found or password not correct");
     }
     @Test
-    @Order(7)
+    @Order(8)
     /**
      * Creating a new user that has to authorize the requesting application
      */
@@ -232,7 +254,7 @@ class AuthorizationGrantIntegrationTest extends BaseRest {
     }
 
     @Test
-    @Order(8)
+    @Order(9)
     /**
      * This test is the normal authentication. A user uses the login form,
      * an access-code is generated and a second call with confidential client-information
