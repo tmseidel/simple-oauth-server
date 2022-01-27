@@ -28,7 +28,7 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 @TestPropertySource(
         locations = "classpath:application-integrationtest.properties")
 @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
-public class RefreshGrantIntegrationTest extends BaseRest {
+class RefreshGrantIntegrationTest extends BaseRest {
 
     @BeforeEach
     public void resetRefreshToken() {

@@ -101,10 +101,4 @@ public class JwtTokenService {
         return parser.parseClaimsJws(token)
                 .getBody();
     }
-
-
-    public boolean validateToken(String token, TokenType type) {
-        Claims claims = getAllClaimsFromToken(token, type);
-        return claims != null;
-    }
 }

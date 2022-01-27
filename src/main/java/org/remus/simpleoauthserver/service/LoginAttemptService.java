@@ -18,7 +18,6 @@ public class LoginAttemptService {
     @Value("${login.max.attempts}")
     private int maxAttempts;
 
-
     @Value("${login.blocked.period}")
     private int blockedPeriod;
 
