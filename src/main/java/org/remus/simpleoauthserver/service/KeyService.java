@@ -2,7 +2,7 @@ package org.remus.simpleoauthserver.service;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.apache.commons.lang3.RandomStringUtils;
-import org.springframework.beans.factory.annotation.Value;
+import org.remus.simpleoauthserver.config.KeyServiceConfig;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.PostConstruct;
@@ -24,6 +24,8 @@ import java.security.spec.X509EncodedKeySpec;
 
 @Service
 public class KeyService {
+
+    private KeyServiceConfig config;
 
     private static class JWTKeys {
         private String authorizationToken;
@@ -55,24 +57,15 @@ public class KeyService {
         }
     }
 
-    @Value("${jwt.privatekey.location}")
-    private String privateKeyLocation;
-
-    @Value("${jwt.publickey.location}")
-    private String publicKeyLocation;
-
-    @Value("${jwt.keys.location}")
-    private String jwtKeysLocation;
-
-    @Value("${files.basepath}")
-    private String basePath;
-
-
     private PrivateKey privateKey;
 
     private PublicKey publicKey;
 
     private JWTKeys jwtKeys;
+
+    public KeyService(KeyServiceConfig config) {
+        this.config = config;
+    }
 
     public String getAuthorizationTokenKey() {
         if (jwtKeys == null) {
@@ -84,7 +77,7 @@ public class KeyService {
     @PostConstruct
     public void init() {
         try {
-            Files.createDirectories(Paths.get(basePath));
+            Files.createDirectories(Paths.get(config.getBasePath()));
         } catch (IOException e) {
             throw new IllegalStateException("Could not create a needed directory");
         }
@@ -105,7 +98,7 @@ public class KeyService {
     }
 
     private synchronized void loadJWTKeys() {
-        File file = Paths.get(jwtKeysLocation).toFile();
+        File file = Paths.get(config.getJwtKeysLocation()).toFile();
         try {
             this.jwtKeys = new ObjectMapper().readValue(file,JWTKeys.class);
         } catch (IOException e) {
@@ -120,13 +113,13 @@ public class KeyService {
         KeyPair keyPair = kpg.generateKeyPair();
         publicKey = keyPair.getPublic();
         privateKey = keyPair.getPrivate();
-        try (FileOutputStream fos = new FileOutputStream(privateKeyLocation)) {
+        try (FileOutputStream fos = new FileOutputStream(config.getPrivateKeyLocation())) {
             fos.write(privateKey.getEncoded());
         }
-        try (FileOutputStream fos = new FileOutputStream(publicKeyLocation)) {
+        try (FileOutputStream fos = new FileOutputStream(config.getPublicKeyLocation())) {
             fos.write(publicKey.getEncoded());
         }
-        try (FileOutputStream fos = new FileOutputStream(jwtKeysLocation)) {
+        try (FileOutputStream fos = new FileOutputStream(config.getJwtKeysLocation())) {
             JWTKeys keys = new JWTKeys();
             keys.setAuthorizationToken(RandomStringUtils.random(32, true, true));
             keys.setRefreshTokenKey(RandomStringUtils.random(32, true, true));
@@ -140,7 +133,7 @@ public class KeyService {
     public PrivateKey getPrivateKey() {
         if (privateKey == null) {
             try {
-                Path path = Paths.get(privateKeyLocation);
+                Path path = Paths.get(config.getPrivateKeyLocation());
                 byte[] bytes = Files.readAllBytes(path);
                 PKCS8EncodedKeySpec ks = new PKCS8EncodedKeySpec(bytes);
                 KeyFactory kf = KeyFactory.getInstance("RSA");
@@ -156,7 +149,7 @@ public class KeyService {
     public PublicKey getPublicKey() {
         if (publicKey == null) {
             try {
-                Path path = Paths.get(publicKeyLocation);
+                Path path = Paths.get(config.getPublicKeyLocation());
                 byte[] bytes = Files.readAllBytes(path);
                 X509EncodedKeySpec ks = new X509EncodedKeySpec(bytes);
                 KeyFactory kf = KeyFactory.getInstance("RSA");

@@ -2,7 +2,7 @@ package org.remus.simpleoauthserver.security;
 
 import io.jsonwebtoken.ExpiredJwtException;
 import io.jsonwebtoken.JwtException;
-import org.remus.simpleoauthserver.Configuration;
+import org.remus.simpleoauthserver.config.Configuration;
 import org.remus.simpleoauthserver.entity.ApplicationType;
 import org.remus.simpleoauthserver.service.JwtTokenService;
 import org.remus.simpleoauthserver.service.TokenBinService;

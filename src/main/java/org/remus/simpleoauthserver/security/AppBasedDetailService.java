@@ -1,6 +1,6 @@
 package org.remus.simpleoauthserver.security;
 
-import org.remus.simpleoauthserver.Configuration;
+import org.remus.simpleoauthserver.config.Configuration;
 import org.remus.simpleoauthserver.entity.Application;
 import org.remus.simpleoauthserver.entity.Scope;
 import org.remus.simpleoauthserver.entity.User;

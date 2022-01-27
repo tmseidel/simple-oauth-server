@@ -1,4 +1,4 @@
-package org.remus.simpleoauthserver;
+package org.remus.simpleoauthserver.config;
 
 import org.remus.simpleoauthserver.security.ScopeRanking;
 import org.springframework.beans.factory.annotation.Value;

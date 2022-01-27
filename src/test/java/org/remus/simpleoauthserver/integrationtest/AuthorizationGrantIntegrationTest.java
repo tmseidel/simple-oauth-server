@@ -230,4 +230,52 @@ class AuthorizationGrantIntegrationTest extends BaseRest {
         String authToken = answer.path("access_token");
         assertNotNull(authToken);
     }
+
+    @Test
+    @Order(8)
+    /**
+     * This test is the normal authentication. A user uses the login form,
+     * an access-code is generated and a second call with confidential client-information
+     * will be sent to acquire an access token.
+     */
+    void happyPathWitRefreshToken() {
+        // Step1: Login via Html-Form with username and password
+        TestUtils.TestUser testUser = new TestUtils.TestUser("test@example.org", "mypassword", "jp98GC73RJ2VBqZB", new String[]{"myapi.write"});
+        // Step2: "Grab" the access token from response-header.
+        accessToken = loadAndSubmitLoginForm(testUser,false);
+        assertNotNull(accessToken);
+
+        // Step3: Get the access token for our user with the new scope
+        String tokenRequestUrl = "/auth/oauth/token";
+        Map<String, String> formParams = new HashMap<>();
+        formParams.put("grant_type", "authorization_code");
+        formParams.put("client_id", "jp98GC73RJ2VBqZB");
+        formParams.put("client_secret", "9OZhG274HP16FRQg58f0IADSQNV3UFiL");
+        formParams.put("code", accessToken);
+        formParams.put("redirect_uri", "http://localhost:8085/myApplication/auth");
+
+        ExtractableResponse<Response> answer = given().log().all().header(FORM_URLENCODED).formParams(formParams).post(tokenRequestUrl).then().extract();
+        answer.response().then().assertThat()
+                .statusCode(200);
+        String refreshToken = answer.path("refresh_token");
+        assertNotNull(refreshToken);
+
+        // Step4:Trying to get an refreshToken
+        formParams = new HashMap<>();
+        formParams.put("grant_type", "refresh_token");
+        formParams.put("client_id", "jp98GC73RJ2VBqZB");
+        formParams.put("client_secret", "9OZhG274HP16FRQg58f0IADSQNV3UFiL");
+        formParams.put("refresh_token", refreshToken);
+        formParams.put("redirect_uri", "http://localhost:8085/myApplication/auth");
+
+        answer = given().log().all().header(FORM_URLENCODED).formParams(formParams).post(tokenRequestUrl).then().extract();
+        answer.response().then().assertThat()
+                .statusCode(200);
+        String accessTokenFromRefreshToken = answer.path("access_token");
+
+        // We have our access token, now we check for the correct contents.
+        Jws<Claims> claimsJws = Jwts.parser().setSigningKey(publicKey).parseClaimsJws(accessTokenFromRefreshToken);
+        assertEquals("test@example.org",claimsJws.getBody().getSubject());
+        assertEquals("myapi.write",claimsJws.getBody().get("scope",String.class));
+    }
 }

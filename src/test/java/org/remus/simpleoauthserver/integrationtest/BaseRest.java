@@ -49,7 +49,7 @@ import static org.json.JSONObject.quote;
 
 public abstract class BaseRest {
 
-    @Value("${files.basepath}")
+    @Value("${soas.keyservice.basepath}")
     private String basePath;
 
     public static final String BASE_URL = "http://localhost";
@@ -63,6 +63,7 @@ public abstract class BaseRest {
     protected static String clientSecret;
     protected static PublicKey publicKey;
     protected static String accessToken;
+    protected static String refreshToken;
     private static Path pubKey;
     @LocalServerPort
     private int port;
@@ -118,10 +119,12 @@ public abstract class BaseRest {
         answer.response().then().assertThat()
                 .body("access_token", notNullValue())
                 .body("token_type", equalTo("Bearer"))
-                .body("expires_in", equalTo(604800));
+                .body("expires_in", equalTo(604800))
+                .body("refresh_token",notNullValue());
 
 
         accessToken = answer.path("access_token");
+        refreshToken = answer.path("refresh_token");
     }
 
     public void loadPublicKey() throws Exception {

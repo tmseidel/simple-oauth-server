@@ -1,6 +1,6 @@
 package org.remus.simpleoauthserver.security;
 
-import org.remus.simpleoauthserver.Configuration;
+import org.remus.simpleoauthserver.config.Configuration;
 import org.remus.simpleoauthserver.entity.User;
 import org.remus.simpleoauthserver.repository.UserRepository;
 import org.remus.simpleoauthserver.service.UserNotFoundException;

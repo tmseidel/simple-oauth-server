@@ -129,6 +129,7 @@ public class AuthorizationGrant extends OAuthGrant {
         tokenData.put("organization_id", user.getOrganization().getId());
         tokenData.put("given_name", user.getName());
         tokenData.put("type",application.getApplicationType().name());
+        tokenData.put(CLIENT_ID,clientId);
 
         AccessTokenResponse response = createResponse(userName,tokenData);
         tokenBinService.invalidateToken(code,claims.getExpiration());

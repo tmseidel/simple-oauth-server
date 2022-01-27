@@ -1,4 +1,4 @@
-package org.remus.simpleoauthserver;
+package org.remus.simpleoauthserver.config;
 
 import org.remus.simpleoauthserver.entity.Application;
 import org.remus.simpleoauthserver.entity.Organization;

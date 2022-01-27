@@ -2,6 +2,7 @@ package org.remus.simpleoauthserver.grants;
 
 import io.jsonwebtoken.Claims;
 import org.remus.simpleoauthserver.entity.Application;
+import org.remus.simpleoauthserver.entity.ApplicationType;
 import org.remus.simpleoauthserver.entity.User;
 import org.remus.simpleoauthserver.repository.ApplicationRepository;
 import org.remus.simpleoauthserver.repository.UserRepository;
@@ -45,25 +46,27 @@ public class RefreshTokenGrant extends OAuthGrant {
             throw new ApplicationNotFoundException("No application found");
         }
         Claims claims = jwtTokenService.getAllClaimsFromToken(refreshToken, JwtTokenService.TokenType.REFRESH);
-        if (claims.get(CLIENT_ID, String.class) == null
-                || !claims.get(CLIENT_ID, String.class).equals(clientId)) {
-            throw new InvalidInputException("client_id not correct");
-        }
+        ApplicationType applicationType = ApplicationType.valueOf(claims.get("type", String.class));
         String userName = claims.getSubject();
-        Optional<User> foundUser = userRepository.findOneByEmailAndActivated(userName, true);
-        if (foundUser.isEmpty()) {
-            throw new UserNotFoundException(String.format("User %s not found", userName));
+        if (applicationType == ApplicationType.M2M) {
+            if (claims.getSubject() == null
+                    || !claims.getSubject().equals(clientId)) {
+                throw new InvalidInputException("subject does not match");
+            }
+        } else if (applicationType == ApplicationType.REGULAR) {
+            if (claims.get(CLIENT_ID, String.class) == null
+                    || !claims.get(CLIENT_ID, String.class).equals(clientId)) {
+                throw new InvalidInputException("client_id not correct");
+            }
+            Optional<User> foundUser = userRepository.findOneByEmailAndActivated(userName, true);
+            if (foundUser.isEmpty()) {
+                throw new UserNotFoundException(String.format("User %s not found", userName));
+            }
         }
-
         AccessTokenResponse response = createResponse(userName, claims);
         tokenBinService.invalidateToken(refreshToken,claims.getExpiration());
         return response;
     }
 
-
-
-    protected int getExpiration() {
-        return Math.toIntExact(expiration);
-    }
 
 }

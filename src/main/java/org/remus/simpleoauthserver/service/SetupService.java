@@ -22,7 +22,7 @@ public class SetupService {
 
     private final Logger logger = LoggerFactory.getLogger(this.getClass());
 
-    @Value("${setup.secret}")
+    @Value("${soas.setup.secret}")
     private String setupSecret;
 
     private ApplicationRepository applicationRepository;
