@@ -10,7 +10,7 @@
     </parent>
     <groupId>org.remus</groupId>
     <artifactId>simple-oauth-server</artifactId>
-    <version>0.1.0</version>
+    <version>0.1.1</version>
     <name>simple-oauth-server</name>
     <description>simple-oauth-server</description>
     <properties>
