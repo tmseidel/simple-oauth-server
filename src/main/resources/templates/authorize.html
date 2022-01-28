@@ -1,0 +1,57 @@
+<!doctype html>
+<html xmlns:th="http://www.thymeleaf.org"
+      th:with="lang=${#locale.language}" th:lang="${lang}">
+<head>
+    <!-- Required meta tags -->
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <link href="/auth/css/styles.css" rel="stylesheet" />
+    <link href="/auth/css/gg-css.css" rel="stylesheet" />
+    <script th:type="${'text/css'}" th:if="${appCss}!=null" th:utext="${appCss}" />
+    <title th:text="${appName}" />
+    <script type="application/x-javascript">
+        let working = false;
+        window.onload = function() {
+            let form = document.querySelector("form");
+            form.onsubmit = submitted.bind(form);
+        }
+        function submitted(event) {
+            event.preventDefault();
+            if (working) return;
+            working = true;
+            let form = document.querySelector("form");
+            let submitSpan = document.querySelector('button > .submit-span');
+            let progressSpan = document.querySelector('button > .progress-span');
+            form.classList.add('loading');
+            submitSpan.style.display = "none";
+            progressSpan.style.display = "block";
+            form.submit();
+        }
+    </script>
+</head>
+<body>
+<div class="wrapper">
+    <form autocomplete="off" action="#" th:object="${login}" method="post" th:class="login">
+        <p class="title" th:text="#{login.header}" />
+        <input type="text" id="userName" aria-describedby="emailHelp"
+               th:placeholder="#{login.placeholder.email}" th:field="*{userName}" autofocus>
+        <i class="gg gg-user"></i>
+        <input type="password"  th:field="*{password}" id="password" th:placeholder="#{login.placeholder.password}">
+        <i class="gg gg-key"></i>
+
+        <small id="emailHelp" th:errors="*{userName}"></small>
+        <small id="passwordHelp" class="form-text text-muted" th:errors="*{password}"></small>
+        <button class="submit" type="submit" th:formaction="@{/auth/oauth/authorize}">
+            <i class="spinner"></i>
+            <span class="state submit-span" th:text="#{login.submit}" />
+            <span class="state progress-span" th:text="#{login.authenticating}" />
+        </button>
+        <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
+        <input type="hidden" th:field="*{signedData}" id="signedData" />
+        <footer><button type="submit" th:formaction="@{/auth/oauth/cancelLogin}" class="cancel" th:text="#{login.cancel}" /></footer>
+    </form>
+    </p>
+</div>
+
+</body>
+</html>

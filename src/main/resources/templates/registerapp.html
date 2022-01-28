@@ -1,0 +1,48 @@
+<!doctype html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <!-- Required meta tags -->
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <link href="/auth/css/styles.css" rel="stylesheet" />
+    <link href="/auth/css/gg-css.css" rel="stylesheet" />
+    <script th:type="${'text/css'}" th:if="${appCss}!=null" th:utext="${appCss}" />
+    <title th:text="${appName}" />
+    <script type="application/x-javascript">
+        let working = false;
+        window.onload = function() {
+            let form = document.querySelector("form");
+            form.onsubmit = submitted.bind(form);
+        }
+        function submitted(event) {
+            event.preventDefault();
+            if (working) return;
+            working = true;
+            let form = document.querySelector("form");
+            let submitSpan = document.querySelector('button > .submit-span');
+            let progressSpan = document.querySelector('button > .progress-span');
+            form.classList.add('loading');
+            submitSpan.style.display = "none";
+            progressSpan.style.display = "block";
+            form.submit();
+        }
+    </script>
+</head>
+<body>
+<div class="wrapper">
+    <form autocomplete="off" th:action="@{/auth/oauth/registerApp}" th:object="${registerApp}" method="post" th:class="login">
+        <p class="title" th:text="#{login2.header(${appName})}" />
+        <p th:text="#{login2.text}" />
+        <button class="submit" type="submit" >
+            <i class="spinner"></i>
+            <span class="state submit-span" th:text="#{login2.accept}" />
+            <span class="state progress-span" th:text="#{login.authenticating}" />
+        </button>
+        <input type="hidden" th:field="*{signedData}" id="signedData" />
+        <footer><button type="submit" th:formaction="@{/auth/oauth/cancel}" class="cancel" th:text="#{login.cancel}" /></footer>
+    </form>
+    </p>
+</div>
+
+</body>
+</html>
