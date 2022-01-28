@@ -13,6 +13,7 @@ In addition it's way simpler than other OpenSource solutions like Keycloak achie
 * Store your userdata globally and provide this data after an authentication to any application with OpenId-Connect.
 * Provide Single-Sign-On (SSO) for all your applications.
 * Store all your data on your own infrastructure and don't be dependent from any cloud-provider or other 3rd party.
+* Use this project as Test-Mock for your application to simulate an OAuth2-Component. The REST-API of **simple-oauth-server** provides flawless setup and configuration from within your build-environment
 
 The following RFCs are implemented:
 * [RFC6749 - OAuth 2.0](https://tools.ietf.org/html/rfc6749)
@@ -35,12 +36,14 @@ The following RFCs are implemented:
 * Join our [Google Group](https://groups.google.com/g/simple-oauth-server)
 
 ## Roadmap
-### 0.1
+### 0.1 (Released 2022-01)
 * Client Credential Flow
-### 0.2
 * Authorization Flow
 * Customizable Login-Pages
+### 0.2
 * OpenId Connect
+* Token Revocation
+* Token Introspection
 ### 0.3
 * Device Authorization Flow
 * Hybrid Flow
