@@ -3,15 +3,7 @@
 
 name: Build the package and runs Sonar
 
-on:
-  push:
-    branches:
-      - develop
-      - master
-  pull_request:
-    branches:
-      - develop
-      - master
+on: [push, pull_request]
 
 
 jobs:
