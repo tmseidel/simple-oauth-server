@@ -5,9 +5,14 @@ name: Build the package and runs Sonar
 
 on:
   push:
-    branches: [develop, master]
+    branches:
+      - develop
+      - master
   pull_request:
-    branches: [develop, master]
+    branches:
+      - develop
+      - master
+
 
 jobs:
   build:
