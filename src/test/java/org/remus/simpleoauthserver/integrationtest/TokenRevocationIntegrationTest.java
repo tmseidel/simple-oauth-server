@@ -17,6 +17,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 import static io.restassured.RestAssured.given;
+import static org.json.JSONObject.quote;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 
@@ -57,6 +58,44 @@ class TokenRevocationIntegrationTest extends BaseRest {
         answer = given().log().all().header(FORM_URLENCODED).formParams(formParams).post(tokenRequestUrl).then().extract();
         answer.response().then().assertThat()
                 .statusCode(400);
+
+    }
+
+    @Test
+    void invalidTokenNoErrorResponse() {
+        // We send the server an invalid token, it must respond with 200 (according to the rfc)
+        String tokenRevocationUrl = "/auth/oauth/revoke";
+        Map<String, String> formParams = new HashMap<>();
+        formParams.put("token", "TotalInvalidToken");
+
+       ExtractableResponse<Response> answer = given().log().all().header(FORM_URLENCODED).formParams(formParams).post(tokenRevocationUrl).then().extract();
+       answer.response().then().assertThat()
+                .statusCode(200);
+    }
+
+    @Test
+    void tokenRevocationOnAccessToken() {
+        String tokenRevocationUrl = "/auth/oauth/revoke";
+        Map<String, String> formParams = new HashMap<>();
+        formParams.put("token", accessToken);
+
+        // Token Revocation must return 200
+        ExtractableResponse<Response> answer = given().log().all().header(FORM_URLENCODED).formParams(formParams).post(tokenRevocationUrl).then().extract();
+        answer.response().then().assertThat()
+                .statusCode(200);
+
+        // Step1: Create the scope that is used for the API we want to secure
+        String scopeName = "AnyNewScope";
+        String description = "Itzli butzli";
+        String newScopeUrl = "/auth/admin/data/scopes";
+        String createScopeJson = "{\n" +
+                "    \"name\" : " + quote(scopeName) + ",\n" +
+                "    \"description\" : "+ quote(description) +"\n" +
+                "}";
+        answer = given().log().all().header(auth(accessToken)).header(JSON).body(createScopeJson).post(newScopeUrl).then().extract();
+        // this action must not be allowed due to token revocation
+        answer.response().then().assertThat()
+                .statusCode(401);
 
     }
 }
