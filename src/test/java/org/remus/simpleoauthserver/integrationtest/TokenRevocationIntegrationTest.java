@@ -8,6 +8,8 @@ import io.restassured.response.Response;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.TestPropertySource;
@@ -34,11 +36,16 @@ class TokenRevocationIntegrationTest extends BaseRest {
         acquireAccessToken();
     }
 
-    @Test
-    void refreshTokenWithTokenRevocation() {
+
+    @ParameterizedTest
+    @ValueSource(booleans =  {true, false})
+    void refreshTokenWithTokenRevocation(boolean tokenHint) {
         // We try to get a new access token with a revoced refresh-token
         String tokenRevocationUrl = "/auth/oauth/revoke";
         Map<String, String> formParams = new HashMap<>();
+        if (tokenHint) {
+            formParams.put("token_type_hint", "refresh_token");
+        }
         formParams.put("token", refreshToken);
 
         // Token Revocation must return 200

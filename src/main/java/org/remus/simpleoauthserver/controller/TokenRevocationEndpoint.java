@@ -32,11 +32,11 @@ public class TokenRevocationEndpoint {
     }
 
     @PostMapping(path = "/auth/oauth/revoke",
-           consumes = MediaType.APPLICATION_FORM_URLENCODED_VALUE)
+            consumes = MediaType.APPLICATION_FORM_URLENCODED_VALUE)
     public void revokeToken(@RequestBody MultiValueMap<String, String> body, HttpServletRequest request) {
         String token = extractValue(body, "token").orElseThrow(() -> new InvalidInputException("Token must be present in request"));
         String tokenTypeHint = extractValue(body, "token_type_hint").orElse("access_token");
-        JwtTokenService.TokenType tokenType[] = new JwtTokenService.TokenType[2];
+        JwtTokenService.TokenType[] tokenType = new JwtTokenService.TokenType[2];
         if ("access_token".equals(tokenTypeHint)) {
             tokenType[0] = JwtTokenService.TokenType.ACCESS;
             tokenType[1] = JwtTokenService.TokenType.REFRESH;
@@ -44,23 +44,19 @@ public class TokenRevocationEndpoint {
             tokenType[0] = JwtTokenService.TokenType.REFRESH;
             tokenType[1] = JwtTokenService.TokenType.ACCESS;
         }
-        if (tokenType != null) {
-            Claims claims = null;
-                for (JwtTokenService.TokenType type : tokenType) {
-                    try {
-                        claims = tokenService.getAllClaimsFromToken(token, type);
-                        break;
-                    } catch (Exception e) {
-                        // we skip all errors that occur while reading the token
-                        LOGGER.warn("Error while decompiling token {} with type {}", token, tokenType, e);
-                    }
-                }
-            if (claims != null) {
-                tokenBinService.invalidateToken(token,claims.getExpiration());
+        Claims claims = null;
+        for (JwtTokenService.TokenType type : tokenType) {
+            try {
+                claims = tokenService.getAllClaimsFromToken(token, type);
+                break;
+            } catch (Exception e) {
+                // we skip all errors that occur while reading the token
+                LOGGER.warn("Error while decompiling token {} with type {}", token, tokenType, e);
             }
         }
-
-
+        if (claims != null) {
+            tokenBinService.invalidateToken(token, claims.getExpiration());
+        }
     }
 
 }
