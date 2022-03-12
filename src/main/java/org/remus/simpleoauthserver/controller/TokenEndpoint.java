@@ -7,6 +7,7 @@ import org.remus.simpleoauthserver.grants.RefreshTokenGrant;
 import org.remus.simpleoauthserver.response.AccessTokenResponse;
 import org.remus.simpleoauthserver.response.ErrorResponse;
 import org.remus.simpleoauthserver.service.ApplicationNotFoundException;
+import org.remus.simpleoauthserver.service.InvalidTokenException;
 import org.remus.simpleoauthserver.service.OAuthException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -63,6 +64,12 @@ public class TokenEndpoint {
     public ResponseEntity<ErrorResponse> handleUnsupportedGrantTypeException(HttpServletRequest request, Throwable ex) {
         HttpStatus status = HttpStatus.BAD_REQUEST;
         return new ResponseEntity<>(new ErrorResponse("invalid_client", ex.getMessage()), status);
+    }
+    @ResponseBody
+    @ExceptionHandler({InvalidTokenException.class})
+    public ResponseEntity<ErrorResponse> handleInvalidTokenException(HttpServletRequest request, Throwable ex) {
+        HttpStatus status = HttpStatus.BAD_REQUEST;
+        return new ResponseEntity<>(new ErrorResponse("invalid_grant", ex.getMessage()), status);
     }
 
 }

@@ -33,7 +33,7 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
     protected void configure(HttpSecurity http) throws Exception {
 
 
-        http.csrf().ignoringAntMatchers(AUTH_ADMIN_DATA, AUTH_FIRST_START,"/auth/oauth/token").and()
+        http.csrf().ignoringAntMatchers(AUTH_ADMIN_DATA, AUTH_FIRST_START,"/auth/oauth/token","/auth/oauth/revoke").and()
                 .cors()
                 .and()
                 .exceptionHandling().authenticationEntryPoint(new HttpStatusEntryPoint(HttpStatus.UNAUTHORIZED))

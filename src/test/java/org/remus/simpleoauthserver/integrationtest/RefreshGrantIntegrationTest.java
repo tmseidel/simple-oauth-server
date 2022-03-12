@@ -27,7 +27,6 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 @DirtiesContext(classMode = DirtiesContext.ClassMode.BEFORE_CLASS)
 @TestPropertySource(
         locations = "classpath:application-integrationtest.properties")
-@TestMethodOrder(MethodOrderer.OrderAnnotation.class)
 class RefreshGrantIntegrationTest extends BaseRest {
 
     @BeforeEach

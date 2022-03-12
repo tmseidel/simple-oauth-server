@@ -9,6 +9,7 @@ import org.remus.simpleoauthserver.repository.UserRepository;
 import org.remus.simpleoauthserver.response.AccessTokenResponse;
 import org.remus.simpleoauthserver.service.ApplicationNotFoundException;
 import org.remus.simpleoauthserver.service.InvalidInputException;
+import org.remus.simpleoauthserver.service.InvalidTokenException;
 import org.remus.simpleoauthserver.service.JwtTokenService;
 import org.remus.simpleoauthserver.service.TokenBinService;
 import org.remus.simpleoauthserver.service.UserNotFoundException;
@@ -39,7 +40,7 @@ public class RefreshTokenGrant extends OAuthGrant {
         String clientSecret = extractClientSecret(body, authorization);
         String refreshToken = extractValue(body, "refresh_token").orElseThrow(() -> new InvalidInputException("refres_token parameter not set"));
         if (tokenBinService.isTokenInvalidated(refreshToken)) {
-            throw new InvalidInputException("The token is already invalidated.");
+            throw new InvalidTokenException("The token is already invalidated.");
         }
         Optional<Application> application = applicationRepository.findApplicationByClientIdAndClientSecretAndActivated(clientId, clientSecret, true);
         if (application.isEmpty()) {

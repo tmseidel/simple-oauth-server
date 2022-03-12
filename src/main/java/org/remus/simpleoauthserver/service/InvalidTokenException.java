@@ -1,6 +1,6 @@
 package org.remus.simpleoauthserver.service;
 
-public class InvalidTokenException extends Exception {
+public class InvalidTokenException extends RuntimeException {
     public InvalidTokenException() {
         super();
     }

@@ -111,7 +111,7 @@ public abstract class OAuthGrant {
         return !user.getApplications().contains(applicationByClientId) && !applicationByClientId.isTrustworthy();
     }
 
-    protected String extractClientSecret(MultiValueMap<String, String> data, String authorizationHeader) {
+    public static String extractClientSecret(MultiValueMap<String, String> data, String authorizationHeader) {
         String clientSecret = null;
         if (!StringUtils.isEmpty(authorizationHeader) && authorizationHeader.toLowerCase().startsWith(BASIC_WITH_WHITESPACE)) {
             String s = new String(Base64.getDecoder().decode(authorizationHeader.replaceFirst("(?i)" + BASIC_WITH_WHITESPACE,"")));
@@ -128,7 +128,7 @@ public abstract class OAuthGrant {
         return clientSecret;
     }
 
-    protected String extractClientId(MultiValueMap<String, String> data, String authorizationHeader) {
+    public static String extractClientId(MultiValueMap<String, String> data, String authorizationHeader) {
         String clientId = null;
         if (!StringUtils.isEmpty(authorizationHeader) && authorizationHeader.toLowerCase().startsWith(BASIC_WITH_WHITESPACE)) {
             String s = new String(Base64.getDecoder().decode(authorizationHeader.replaceFirst("(?i)" + BASIC_WITH_WHITESPACE,"")));
