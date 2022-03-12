@@ -6,9 +6,7 @@ import io.jsonwebtoken.Jwts;
 import io.restassured.response.ExtractableResponse;
 import io.restassured.response.Response;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.MethodOrderer;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.TestMethodOrder;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.annotation.DirtiesContext;
@@ -27,7 +25,7 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 @DirtiesContext(classMode = DirtiesContext.ClassMode.BEFORE_CLASS)
 @TestPropertySource(
         locations = "classpath:application-integrationtest.properties")
-class RefreshGrantIntegrationTest extends BaseRest {
+class TokenRevocationIntegrationTest extends BaseRest {
 
     @BeforeEach
     public void resetRefreshToken() {
@@ -36,25 +34,29 @@ class RefreshGrantIntegrationTest extends BaseRest {
     }
 
     @Test
-    void happyPathWithTokenFromClientGrant() {
-        // Step3: Get the access token for our user with the new scope
-        String tokenRequestUrl = "/auth/oauth/token";
+    void refreshTokenWithTokenRevocation() {
+        // We try to get a new access token with a revoced refresh-token
+        String tokenRevocationUrl = "/auth/oauth/revoke";
         Map<String, String> formParams = new HashMap<>();
+        formParams.put("token", refreshToken);
+
+        // Token Revocation must return 200
+        ExtractableResponse<Response> answer = given().log().all().header(FORM_URLENCODED).formParams(formParams).post(tokenRevocationUrl).then().extract();
+        answer.response().then().assertThat()
+                .statusCode(200);
+
+
+        String tokenRequestUrl = "/auth/oauth/token";
+        formParams = new HashMap<>();
         formParams.put("grant_type", "refresh_token");
         formParams.put("client_id", clientId);
         formParams.put("client_secret", clientSecret);
         formParams.put("refresh_token", refreshToken);
         formParams.put("redirect_uri", "http://localhost:8085/myApplication/auth");
 
-        ExtractableResponse<Response> answer = given().log().all().header(FORM_URLENCODED).formParams(formParams).post(tokenRequestUrl).then().extract();
+        answer = given().log().all().header(FORM_URLENCODED).formParams(formParams).post(tokenRequestUrl).then().extract();
         answer.response().then().assertThat()
-                .statusCode(200);
-        String accessToken = answer.path("access_token");
-        assertNotNull(accessToken);
+                .statusCode(400);
 
-        // We have our access token, now we check for the correct contents.
-        Jws<Claims> claimsJws = Jwts.parser().setSigningKey(publicKey).parseClaimsJws(accessToken);
-        assertEquals(clientId,claimsJws.getBody().getSubject());
-        assertEquals("data.superadmin",claimsJws.getBody().get("scope",String.class));
     }
 }
