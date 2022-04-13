@@ -3,7 +3,6 @@ package org.remus.simpleoauthserver.entity.projection;
 import org.remus.simpleoauthserver.entity.Application;
 import org.remus.simpleoauthserver.entity.ApplicationType;
 import org.remus.simpleoauthserver.entity.Scope;
-import org.remus.simpleoauthserver.entity.User;
 import org.springframework.data.rest.core.config.Projection;
 
 import java.util.Set;
