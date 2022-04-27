@@ -38,6 +38,7 @@ public abstract class OAuthGrant {
     public static final String BASIC_WITH_WHITESPACE = "basic ";
 
     public static final String CLIENT_ID = "client_id";
+    public static final String CODE_CHALLENGE = "code_challenge";
 
     public static final String REDIRECT_URI = "redirect_uri";
     public static final String CODE = "code";
@@ -123,7 +124,7 @@ public abstract class OAuthGrant {
             }
         }
         if (clientSecret == null) {
-            clientSecret = extractValue(data, "client_secret").orElseThrow(() -> new InvalidInputException("No client_secret present"));
+            clientSecret = extractValue(data, "client_secret").orElse(null);
         }
         return clientSecret;
     }
