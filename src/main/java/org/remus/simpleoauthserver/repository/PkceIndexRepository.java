@@ -19,4 +19,5 @@ public interface PkceIndexRepository extends CrudRepository<PkceIndex, String> {
     @Query("DELETE FROM PkceIndex m WHERE m.invalidationDate < :date")
     void deleteOldPkceEntries(@Param("date") Date date);
 
+
 }

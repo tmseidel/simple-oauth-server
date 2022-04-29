@@ -45,7 +45,7 @@ public class PkceService {
                 throw new PkceFailedException("PKCE Code-Challenge was not successful.");
             }
         } catch (NoSuchAlgorithmException e) {
-            e.printStackTrace();
+            throw new IllegalStateException("SHA256 Algorithm not found", e);
         }
     }
 
@@ -56,5 +56,9 @@ public class PkceService {
         pkceIndex.setCodeChallengeMethod("S256");
         pkceIndex.setInvalidationDate(JwtTokenService.calculateExpirationDate(authTokenExpiration));
         pkceIndexRepository.save(pkceIndex);
+    }
+
+    public void invalidateToken(String code) {
+        pkceIndexRepository.deleteById(code);
     }
 }

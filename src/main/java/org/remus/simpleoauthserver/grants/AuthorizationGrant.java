@@ -134,6 +134,7 @@ public class AuthorizationGrant extends OAuthGrant {
 
         AccessTokenResponse response = createResponse(userName, tokenData);
         tokenBinService.invalidateToken(code, claims.getExpiration());
+        pkceService.invalidateToken(code);
         return response;
     }
 
