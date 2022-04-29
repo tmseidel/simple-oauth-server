@@ -70,7 +70,10 @@ public class AuthorizationGrant extends OAuthGrant {
         }
         Application application = findApplication(requestParams);
         if (application.getApplicationType() == ApplicationType.SPA) {
-            extractValue(requestParams, CODE_CHALLENGE).orElseThrow(() -> new InvalidInputException("code_challenge is missing"));
+            String codeChallenge = extractValue(requestParams, CODE_CHALLENGE).orElseThrow(() -> new InvalidInputException("code_challenge is missing"));
+            if (StringUtils.isEmpty(codeChallenge)) {
+                throw new InvalidInputException("code_challenge is invalid");
+            }
             String method = extractValue(requestParams, "code_challenge_method").orElseThrow(() -> new InvalidInputException("code_challenge_method is missing"));
             if (!"S256".equals(method)) {
                 throw new InvalidInputException("The server only acceppts S256 pkce methods.");

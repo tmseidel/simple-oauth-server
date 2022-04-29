@@ -1,7 +1,6 @@
 package org.remus.simpleoauthserver.controller;
 
 import org.remus.simpleoauthserver.entity.Application;
-import org.remus.simpleoauthserver.entity.ApplicationType;
 import org.remus.simpleoauthserver.entity.User;
 import org.remus.simpleoauthserver.grants.AuthorizationGrant;
 import org.remus.simpleoauthserver.request.AuthorizeApplicationForm;
@@ -11,7 +10,6 @@ import org.remus.simpleoauthserver.service.ApplicationNotFoundException;
 import org.remus.simpleoauthserver.service.InvalidIpException;
 import org.remus.simpleoauthserver.service.LoginAttemptService;
 import org.remus.simpleoauthserver.service.OAuthException;
-import org.remus.simpleoauthserver.service.PkceService;
 import org.remus.simpleoauthserver.service.ScopeNotFoundException;
 import org.remus.simpleoauthserver.service.TokenHelper;
 import org.remus.simpleoauthserver.service.UserLockedException;
