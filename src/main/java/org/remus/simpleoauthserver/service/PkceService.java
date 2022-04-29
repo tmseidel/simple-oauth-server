@@ -4,6 +4,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.remus.simpleoauthserver.entity.PkceIndex;
 import org.remus.simpleoauthserver.repository.PkceIndexRepository;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.stereotype.Service;
 
 import java.nio.charset.StandardCharsets;
@@ -59,6 +60,8 @@ public class PkceService {
     }
 
     public void invalidateToken(String code) {
-        pkceIndexRepository.deleteById(code);
+        if (pkceIndexRepository.existsById(code)) {
+            pkceIndexRepository.deleteById(code);
+        }
     }
 }
