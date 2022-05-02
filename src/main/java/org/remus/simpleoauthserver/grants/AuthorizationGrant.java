@@ -122,7 +122,7 @@ public class AuthorizationGrant extends OAuthGrant {
         if (tokenBinService.isTokenInvalidated(code)) {
             throw new InvalidInputException("The token was already used.");
         }
-        Application application = applicationRepository.findApplicationByClientIdAndClientSecretAndActivated(clientId, clientSecret, true)
+        Application application = applicationRepository.findOneByClientIdAndActivated(clientId,true)
                 .orElseThrow(() -> new ApplicationNotFoundException("No application found"));
         checkCodeAndClientSecret(body, code, clientSecret, application);
         Claims claims = getClaims(code, clientId, redirectUrl);

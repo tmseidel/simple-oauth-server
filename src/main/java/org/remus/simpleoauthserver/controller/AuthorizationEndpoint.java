@@ -96,7 +96,7 @@ public class AuthorizationEndpoint {
     public String authorizeSubmit(@ModelAttribute("login") @Validated LoginForm login, BindingResult result,
                                   Model model, RedirectAttributes redirectAttributes, HttpServletRequest request) {
         String token = login.getSignedData();
-        Map<String, Object> values = tokenHelper.decode(token, REDIRECT_URI, CLIENT_ID, SCOPE, STATE);
+        Map<String, Object> values = tokenHelper.decode(token, REDIRECT_URI, CLIENT_ID, SCOPE, STATE, CODE_CHALLENGE);
         String redirectUri = (String) values.get(REDIRECT_URI);
         String clientId = (String) values.get(CLIENT_ID);
         String scopeList = (String) values.get(SCOPE);

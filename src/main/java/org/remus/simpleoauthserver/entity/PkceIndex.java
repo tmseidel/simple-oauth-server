@@ -11,6 +11,7 @@ import java.util.Date;
 public class PkceIndex {
 
     @Id
+    @Column(length = 2000)
     private String accessCode;
 
     @Column(nullable = false)
