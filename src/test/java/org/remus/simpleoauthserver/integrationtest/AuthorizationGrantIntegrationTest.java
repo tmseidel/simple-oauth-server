@@ -351,7 +351,7 @@ class AuthorizationGrantIntegrationTest extends BaseRest {
 
     @Test
     @Order(11)
-    public void pkceInvalidCodeVerifier() {
+    void pkceInvalidCodeVerifier() {
         String codeChallenge = "9gcD4CYOtpYCFVsQL7dkbGIJPD-7oPcO1iR__GOl07s";
         TestUtils.TestUser testUser = new TestUtils.TestUser("test@example.org", "mypassword", "RN9SqW16D7GTZ5EP", new String[]{"myapi.write"});
         testUser.setCodeChallenge(codeChallenge);
@@ -373,6 +373,17 @@ class AuthorizationGrantIntegrationTest extends BaseRest {
         answer.response().then().assertThat()
                 .statusCode(400);
         assertTrue(answer.response().asPrettyString().contains("PKCE Code-Challenge was not successful."));
+    }
 
+    @Test
+    void noClientId() {
+        TestUtils.TestUser user = new TestUtils.TestUser("test@example.org", "mypassword", "jp98GC73RJ2VBqZB", new String[]{"myapi.write"});
+        String loginUrl = getBaseUrl() + "/auth/oauth/authorize?response_type=code" +
+                "&scope="+ String.join(",",user.getScope()) + "" +
+                "&redirect_uri=http://localhost:8085/myApplication/auth&state=12345";
+
+        ExtractableResponse<Response> response = given().log().all().get(loginUrl).then().extract();
+        assertEquals(400,response.statusCode());
+        assertThat(response.asPrettyString()).contains("client_id is missing");
     }
 }
