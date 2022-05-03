@@ -76,7 +76,7 @@ public class AuthorizationGrant extends OAuthGrant {
             }
             String method = extractValue(requestParams, "code_challenge_method").orElseThrow(() -> new InvalidInputException("code_challenge_method is missing"));
             if (!"S256".equals(method)) {
-                throw new InvalidInputException("The server only acceppts S256 pkce methods.");
+                throw new InvalidInputException("The server only accepts S256 pkce methods.");
             }
         }
 

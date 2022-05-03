@@ -386,4 +386,54 @@ class AuthorizationGrantIntegrationTest extends BaseRest {
         assertEquals(400,response.statusCode());
         assertThat(response.asPrettyString()).contains("client_id is missing");
     }
+
+    @Test
+    void wrongResponseType() {
+        TestUtils.TestUser user = new TestUtils.TestUser("test@example.org", "mypassword", "jp98GC73RJ2VBqZB", new String[]{"myapi.write"});
+        String loginUrl = getBaseUrl() + "/auth/oauth/authorize?response_type=invalid" +
+                "&scope="+ String.join(",",user.getScope()) + "&client_id=jp98GC73RJ2VBqZB" +
+                "&redirect_uri=http://localhost:8085/myApplication/auth&state=12345";
+
+        ExtractableResponse<Response> response = given().log().all().get(loginUrl).then().extract();
+        assertEquals(400,response.statusCode());
+        assertThat(response.asPrettyString()).contains("response_type is not 'code'");
+
+    }
+
+    @Test
+    void redirectNoAbsoluteUrl() {
+        TestUtils.TestUser user = new TestUtils.TestUser("test@example.org", "mypassword", "jp98GC73RJ2VBqZB", new String[]{"myapi.write"});
+        String loginUrl = getBaseUrl() + "/auth/oauth/authorize?response_type=code" +
+                "&scope="+ String.join(",",user.getScope()) + "&client_id=jp98GC73RJ2VBqZB" +
+                "&redirect_uri=/myApplication/auth&state=12345";
+
+        ExtractableResponse<Response> response = given().log().all().get(loginUrl).then().extract();
+        assertEquals(400,response.statusCode());
+        assertThat(response.asPrettyString()).contains("redirect_uri is not an absolute URL");
+
+    }
+    @Test
+    void noCodeChallenge() {
+        TestUtils.TestUser user = new TestUtils.TestUser("test@example.org", "mypassword", "RN9SqW16D7GTZ5EP", new String[]{"myapi.write"});
+        String loginUrl = getBaseUrl() + "/auth/oauth/authorize?response_type=code" +
+                "&scope="+ String.join(",",user.getScope()) + "&client_id=RN9SqW16D7GTZ5EP" +
+                "&redirect_uri=http://localhost:8085/myApplication/auth&state=12345&code_challenge_method=S256";
+
+        ExtractableResponse<Response> response = given().log().all().get(loginUrl).then().extract();
+        assertEquals(400,response.statusCode());
+        assertThat(response.asPrettyString()).contains("code_challenge is missing");
+
+    }
+
+    @Test
+    void invalidCodeChallengeMethod() {
+        TestUtils.TestUser user = new TestUtils.TestUser("test@example.org", "mypassword", "RN9SqW16D7GTZ5EP", new String[]{"myapi.write"});
+        String loginUrl = getBaseUrl() + "/auth/oauth/authorize?response_type=code" +
+                "&scope="+ String.join(",",user.getScope()) + "&client_id=RN9SqW16D7GTZ5EP" +
+                "&redirect_uri=http://localhost:8085/myApplication/auth&state=12345&code_challenge=anyValue&code_challenge_method=plain";
+
+        ExtractableResponse<Response> response = given().log().all().get(loginUrl).then().extract();
+        assertEquals(400,response.statusCode());
+        assertThat(response.asPrettyString()).contains("The server only accepts S256 pkce methods");
+    }
 }
