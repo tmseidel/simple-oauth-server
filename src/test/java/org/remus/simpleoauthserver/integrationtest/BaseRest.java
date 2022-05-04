@@ -314,7 +314,13 @@ public abstract class BaseRest {
     }
 
     protected String buildLoginPage(TestUtils.TestUser user) {
-        return getBaseUrl() + "/auth/oauth/authorize?response_type=code&client_id="+user.getClientId()+"&scope="+ String.join(",",user.getScope())+"&redirect_uri=http://localhost:8085/myApplication/auth&state=12345";
+        String codeChallengeFragmet = "";
+        if (user.getCodeChallenge() != null) {
+            codeChallengeFragmet = "&code_challenge="+user.getCodeChallenge()+"&code_challenge_method=S256";
+        }
+        return getBaseUrl() + "/auth/oauth/authorize?response_type=code&client_id="+user.getClientId()+"" +
+                "&scope="+ String.join(",",user.getScope()) + codeChallengeFragmet + "" +
+                "&redirect_uri=http://localhost:8085/myApplication/auth&state=12345";
     }
 
 

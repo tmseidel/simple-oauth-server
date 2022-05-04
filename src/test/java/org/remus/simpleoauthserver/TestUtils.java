@@ -15,6 +15,7 @@ public class TestUtils {
         private final String passWord;
         private final String clientId;
         private final String[] scope;
+        private String codeChallenge;
 
         public TestUser(String userName, String passWord, String clientId, String... scope) {
             this.userName = userName;
@@ -37,6 +38,14 @@ public class TestUtils {
 
         public String[] getScope() {
             return scope;
+        }
+
+        public String getCodeChallenge() {
+            return codeChallenge;
+        }
+
+        public void setCodeChallenge(String codeChallenge) {
+            this.codeChallenge = codeChallenge;
         }
     }
 
@@ -65,4 +74,7 @@ public class TestUtils {
         user.setActivated(true);
         return user;
     }
+
+
+
 }
