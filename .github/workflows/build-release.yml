@@ -20,7 +20,7 @@ jobs:
           distribution: 'adopt'
           cache: maven
       - name: Set Environment-Variables
-        run: echo "finalName=${{ github.ref }}" | sed s/"refs\/tags\/"// >> $GITHUB_ENV
+        run: echo "finalName=${{ github.ref }}" | sed s/"refs\/tags\/v"// >> $GITHUB_ENV
       - name: Cache Maven packages
         uses: actions/cache@v1
         with:
