@@ -49,6 +49,7 @@ public class Application {
     private Set<Scope> scopeList;
 
     @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
     private ApplicationType applicationType;
 
     public Integer getId() {

@@ -73,7 +73,7 @@ public class JwtTokenService {
         return jwtBuilder.compact();
     }
 
-    private Date calculateExpirationDate(long expirationInSeconds) {
+    public static Date calculateExpirationDate(long expirationInSeconds) {
         return new Date(new Date().getTime() + expirationInSeconds * 1000);
     }
 
