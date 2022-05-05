@@ -1,8 +1,29 @@
+/**
+ * Copyright(c) 2022 Tom Seidel, Remus Software
+ *
+ * Licensed to the Apache Software Foundation (ASF) under one
+ * or more contributor license agreements.  See the NOTICE file
+ * distributed with this work for additional information
+ * regarding copyright ownership.  The ASF licenses this file
+ * to you under the Apache License, Version 2.0 (the
+ * "License"); you may not use this file except in compliance
+ * with the License.  You may obtain a copy of the License at
+ *
+ *   http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing,
+ * software distributed under the License is distributed on an
+ * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+ * KIND, either express or implied.  See the License for the
+ * specific language governing permissions and limitations
+ * under the License.
+ */
 package org.remus.simpleoauthserver.grants;
 
 import io.jsonwebtoken.Claims;
 import org.apache.commons.lang3.StringUtils;
 import org.remus.simpleoauthserver.entity.Application;
+import org.remus.simpleoauthserver.entity.ApplicationType;
 import org.remus.simpleoauthserver.entity.User;
 import org.remus.simpleoauthserver.repository.ApplicationRepository;
 import org.remus.simpleoauthserver.repository.UserRepository;
@@ -10,6 +31,7 @@ import org.remus.simpleoauthserver.response.AccessTokenResponse;
 import org.remus.simpleoauthserver.service.ApplicationNotFoundException;
 import org.remus.simpleoauthserver.service.InvalidInputException;
 import org.remus.simpleoauthserver.service.JwtTokenService;
+import org.remus.simpleoauthserver.service.PkceService;
 import org.remus.simpleoauthserver.service.TokenBinService;
 import org.remus.simpleoauthserver.service.UserNotFoundException;
 import org.slf4j.Logger;
@@ -34,6 +56,7 @@ public class AuthorizationGrant extends OAuthGrant {
     private final Logger logger = LoggerFactory.getLogger(this.getClass());
     private final EntityManager entityManager;
     private final TokenBinService tokenBinService;
+    private final PkceService pkceService;
 
     protected AuthorizationGrant(
             ApplicationRepository applicationRepository,
@@ -41,10 +64,11 @@ public class AuthorizationGrant extends OAuthGrant {
             JwtTokenService jwtTokenService,
             PasswordEncoder passwordEncoder,
             EntityManager entityManager,
-            TokenBinService tokenBinService) {
+            TokenBinService tokenBinService, PkceService pkceService) {
         super(applicationRepository, userRepository, jwtTokenService, passwordEncoder);
         this.entityManager = entityManager;
         this.tokenBinService = tokenBinService;
+        this.pkceService = pkceService;
     }
 
 
@@ -62,6 +86,17 @@ public class AuthorizationGrant extends OAuthGrant {
             boolean absoluteUrl = UrlUtils.isAbsoluteUrl(redirectUri.orElse(null));
             if (!absoluteUrl) {
                 throw new InvalidInputException("redirect_uri is not an absolute URL.");
+            }
+        }
+        Application application = findApplication(requestParams);
+        if (application.getApplicationType() == ApplicationType.SPA) {
+            String codeChallenge = extractValue(requestParams, CODE_CHALLENGE).orElseThrow(() -> new InvalidInputException("code_challenge is missing"));
+            if (StringUtils.isEmpty(codeChallenge)) {
+                throw new InvalidInputException("code_challenge is invalid");
+            }
+            String method = extractValue(requestParams, "code_challenge_method").orElseThrow(() -> new InvalidInputException("code_challenge_method is missing"));
+            if (!"S256".equals(method)) {
+                throw new InvalidInputException("The server only accepts S256 pkce methods.");
             }
         }
 
@@ -101,17 +136,32 @@ public class AuthorizationGrant extends OAuthGrant {
     @Transactional
     public AccessTokenResponse execute(MultiValueMap<String, String> body, String authorization) {
         String code = extractValue(body, CODE).orElseThrow(() -> new InvalidInputException("code is missing"));
-        String clientId = extractClientId(body,authorization);
-        String clientSecret = extractClientSecret(body,authorization);
+        String clientId = extractClientId(body, authorization);
+        String clientSecret = extractClientSecret(body, authorization);
         String redirectUrl = extractValue(body, REDIRECT_URI).orElseThrow();
-        if(tokenBinService.isTokenInvalidated(code)) {
+        if (tokenBinService.isTokenInvalidated(code)) {
             throw new InvalidInputException("The token was already used.");
         }
-        if (StringUtils.isEmpty(clientSecret)) {
-            throw new InvalidInputException("No client secret found.");
-        }
-        Application application = applicationRepository.findApplicationByClientIdAndClientSecretAndActivated(clientId, clientSecret, true)
+        Application application = applicationRepository.findOneByClientIdAndActivated(clientId,true)
                 .orElseThrow(() -> new ApplicationNotFoundException("No application found"));
+        checkCodeAndClientSecret(body, code, clientSecret, application);
+        Claims claims = getClaims(code, clientId, redirectUrl);
+        String userName = claims.getSubject();
+        User user = userRepository.findOneByEmail(userName).orElseThrow(() -> new UserNotFoundException(String.format("User %s not found", userName)));
+        Map<String, Object> tokenData = new HashMap<>();
+        tokenData.put(SCOPE, claims.get(SCOPE));
+        tokenData.put("organization_id", user.getOrganization().getId());
+        tokenData.put("given_name", user.getName());
+        tokenData.put("type", application.getApplicationType().name());
+        tokenData.put(CLIENT_ID, clientId);
+
+        AccessTokenResponse response = createResponse(userName, tokenData);
+        tokenBinService.invalidateToken(code, claims.getExpiration());
+        pkceService.invalidateToken(code);
+        return response;
+    }
+
+    private Claims getClaims(String code, String clientId, String redirectUrl) {
         Claims claims = jwtTokenService.getAllClaimsFromToken(code, JwtTokenService.TokenType.AUTH);
         // Check if the client-id is the same as in the authorization-request.
         if (claims.get(CLIENT_ID, String.class) == null
@@ -122,18 +172,19 @@ public class AuthorizationGrant extends OAuthGrant {
                 || !claims.get(REDIRECT_URI, String.class).equals(redirectUrl)) {
             throw new InvalidInputException("redirect_uri not correct");
         }
-        String userName = claims.getSubject();
-        User user = userRepository.findOneByEmail(userName).orElseThrow(() -> new UserNotFoundException(String.format("User %s not found", userName)));
-        Map<String, Object> tokenData = new HashMap<>();
-        tokenData.put(SCOPE, claims.get(SCOPE));
-        tokenData.put("organization_id", user.getOrganization().getId());
-        tokenData.put("given_name", user.getName());
-        tokenData.put("type",application.getApplicationType().name());
-        tokenData.put(CLIENT_ID,clientId);
+        return claims;
+    }
 
-        AccessTokenResponse response = createResponse(userName,tokenData);
-        tokenBinService.invalidateToken(code,claims.getExpiration());
-        return response;
+    private void checkCodeAndClientSecret(MultiValueMap<String, String> body, String code, String clientSecret, Application application) {
+        // If the application is an SPA there is no client-secret and we have to check the verifier.
+        if (application.getApplicationType() == ApplicationType.SPA) {
+            String codeVerifier = extractValue(body, "code_verifier").orElseThrow(() -> new InvalidInputException("code-verifier is missing"));
+            pkceService.checkVerifier(code, codeVerifier);
+        } else {
+            if (StringUtils.isEmpty(clientSecret) || !application.getClientSecret().equals(clientSecret)) {
+                throw new InvalidInputException("No client secret found or client-secret invalid.");
+            }
+        }
     }
 
     @Transactional
@@ -146,4 +197,10 @@ public class AuthorizationGrant extends OAuthGrant {
         }
     }
 
+    public void checkPkceEntry(String codeChallenge, String authorizationToken, String clientId, String redirectUri) {
+        Application application = getApplicationByClientIdAndRedirect(clientId, redirectUri);
+        if (application.getApplicationType() == ApplicationType.SPA) {
+            pkceService.createEntry(authorizationToken, codeChallenge);
+        }
+    }
 }

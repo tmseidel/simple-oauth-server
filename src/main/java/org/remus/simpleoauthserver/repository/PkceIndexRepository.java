@@ -18,22 +18,26 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-package org.remus.simpleoauthserver.security;
+package org.remus.simpleoauthserver.repository;
 
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.context.annotation.Configuration;
-import org.springframework.web.servlet.config.annotation.CorsRegistry;
-import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
+import org.remus.simpleoauthserver.entity.PkceIndex;
+import org.springframework.data.jpa.repository.Modifying;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.CrudRepository;
+import org.springframework.data.repository.query.Param;
 
-@Configuration
-public class CorsConfigurator implements WebMvcConfigurer {
+import javax.transaction.Transactional;
+import java.util.Date;
+import java.util.Optional;
 
-    @Value("${cors.allowed.origins}")
-    private String[] allowedOrigins;
+public interface PkceIndexRepository extends CrudRepository<PkceIndex, String> {
 
-    @Override
-    public void addCorsMappings(CorsRegistry registry) {
-        registry.addMapping("/**")
-                .allowedMethods("*").allowedHeaders("*");
-    }
+    Optional<PkceIndex> findByAccessCode(String accessCode);
+
+    @Transactional
+    @Modifying
+    @Query("DELETE FROM PkceIndex m WHERE m.invalidationDate < :date")
+    void deleteOldPkceEntries(@Param("date") Date date);
+
+
 }

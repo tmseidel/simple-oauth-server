@@ -1,3 +1,23 @@
+/**
+ * Copyright(c) 2022 Tom Seidel, Remus Software
+ *
+ * Licensed to the Apache Software Foundation (ASF) under one
+ * or more contributor license agreements.  See the NOTICE file
+ * distributed with this work for additional information
+ * regarding copyright ownership.  The ASF licenses this file
+ * to you under the Apache License, Version 2.0 (the
+ * "License"); you may not use this file except in compliance
+ * with the License.  You may obtain a copy of the License at
+ *
+ *   http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing,
+ * software distributed under the License is distributed on an
+ * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+ * KIND, either express or implied.  See the License for the
+ * specific language governing permissions and limitations
+ * under the License.
+ */
 package org.remus.simpleoauthserver.grants;
 
 import org.apache.commons.lang3.StringUtils;
@@ -38,6 +58,7 @@ public abstract class OAuthGrant {
     public static final String BASIC_WITH_WHITESPACE = "basic ";
 
     public static final String CLIENT_ID = "client_id";
+    public static final String CODE_CHALLENGE = "code_challenge";
 
     public static final String REDIRECT_URI = "redirect_uri";
     public static final String CODE = "code";
@@ -111,7 +132,7 @@ public abstract class OAuthGrant {
         return !user.getApplications().contains(applicationByClientId) && !applicationByClientId.isTrustworthy();
     }
 
-    protected String extractClientSecret(MultiValueMap<String, String> data, String authorizationHeader) {
+    public static String extractClientSecret(MultiValueMap<String, String> data, String authorizationHeader) {
         String clientSecret = null;
         if (!StringUtils.isEmpty(authorizationHeader) && authorizationHeader.toLowerCase().startsWith(BASIC_WITH_WHITESPACE)) {
             String s = new String(Base64.getDecoder().decode(authorizationHeader.replaceFirst("(?i)" + BASIC_WITH_WHITESPACE,"")));
@@ -123,12 +144,12 @@ public abstract class OAuthGrant {
             }
         }
         if (clientSecret == null) {
-            clientSecret = extractValue(data, "client_secret").orElseThrow(() -> new InvalidInputException("No client_secret present"));
+            clientSecret = extractValue(data, "client_secret").orElse(null);
         }
         return clientSecret;
     }
 
-    protected String extractClientId(MultiValueMap<String, String> data, String authorizationHeader) {
+    public static String extractClientId(MultiValueMap<String, String> data, String authorizationHeader) {
         String clientId = null;
         if (!StringUtils.isEmpty(authorizationHeader) && authorizationHeader.toLowerCase().startsWith(BASIC_WITH_WHITESPACE)) {
             String s = new String(Base64.getDecoder().decode(authorizationHeader.replaceFirst("(?i)" + BASIC_WITH_WHITESPACE,"")));

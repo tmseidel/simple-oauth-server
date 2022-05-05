@@ -2,11 +2,11 @@
 
 # Welcome to the simple-oauth-server project!
 
-Secure your APIs and provide Single-Sign-On with **simple-oauth-server**. It's the easiest way to secure web-applications with the popular OAuth Protocol.
+Secure your APIs and provide Single-Sign-On with **simple-oauth-server**. It's the easiest way to secure web-applications with the popular OAuth2 Protocol.
 
-The goal of this project is to provide an OAuth Authentication & Authorization Backend for self-hosting. It's an alternative to the OAuth-Backends from big cloud-providers like AWS or Azure and the commercial ones like auth0.com.
+The goal of this project is to provide an OAuth2 Authentication & Authorization Backend for self-hosting. It's an alternative to the OAuth-Backends from big cloud-providers like AWS or Azure and the commercial ones like auth0.com.
 
-In addition it's way simpler than other OpenSource solutions like Keycloak achieved by keeping the features focussed on OAuth.
+In addition, it's way simpler than other OpenSource solutions like Keycloak achieved by keeping the features focussed on OAuth2.
 
 ## Use cases
 * Add authentication and authorization to your application, either interactive with username/password or automatically via Machine-2-machine authentication. 
@@ -15,40 +15,30 @@ In addition it's way simpler than other OpenSource solutions like Keycloak achie
 * Store all your data on your own infrastructure and don't be dependent from any cloud-provider or other 3rd party.
 * Use this project as Test-Mock for your application to simulate an OAuth2-Component. The REST-API of **simple-oauth-server** provides flawless setup and configuration from within your build-environment
 
+## Features
+* OAuth2-Login Flows for 
+  * Traditional Web-applications
+  * Mobile-Apps or Single-Page-Applications
+  * Daemons or Headless applications
+  * Devices
+* REST-Services for Authorization and JWT Token-Usage
+* Customizable Login Page
+
 The following RFCs are implemented:
 * [RFC6749 - OAuth 2.0](https://tools.ietf.org/html/rfc6749)
+* [RFC7636 - Proof Key for Code Exchange by OAuth Public Clients](https://datatracker.ietf.org/doc/html/rfc7636)
 * [RFC6750 - Bearer Token Usage](https://tools.ietf.org/html/rfc6750)
 * [RFC6819 - OAuth 2.0 Threat Model and Security Considerations](https://tools.ietf.org/html/rfc6819)
 * [RFC7009 - Token Revocation](https://datatracker.ietf.org/doc/html/rfc7009)
 * [RFC7662 - Token Introspection](https://datatracker.ietf.org/doc/html/rfc7662)
 
-
-## Features
-* Support of the OAuth Authorization Flows
-    * Authorization Code Flow
-    * Hybrid Flow
-    * Client Credentials Flow
-    * Device Authorization Flow
-* Customizable Login Page
-* Full Configuration via REST-Interface
+## Documentation
+Visit our [Documentation](https://github.com/tmseidel/simple-oauth-server/wiki)
 
 ## Support & Discussion
-* Join our [Google Group](https://groups.google.com/g/simple-oauth-server)
+* Join our [Forums](https://github.com/tmseidel/simple-oauth-server/discussions)
 
-## Roadmap
-### 0.1 (Released 2022-01)
-* Client Credential Flow
-* Authorization Flow
-* Customizable Login-Pages
-### 0.2
-* OpenId Connect
-* Token Revocation
-* Token Introspection
-### 0.3
-* Device Authorization Flow
-* Hybrid Flow
-### 0.4
-* Rest-Client for full control of the configuration
+
 
 
  

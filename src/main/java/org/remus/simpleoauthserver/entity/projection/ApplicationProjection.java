@@ -18,22 +18,37 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-package org.remus.simpleoauthserver.security;
+package org.remus.simpleoauthserver.entity.projection;
 
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.context.annotation.Configuration;
-import org.springframework.web.servlet.config.annotation.CorsRegistry;
-import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
+import org.remus.simpleoauthserver.entity.Application;
+import org.remus.simpleoauthserver.entity.ApplicationType;
+import org.remus.simpleoauthserver.entity.Scope;
+import org.springframework.data.rest.core.config.Projection;
 
-@Configuration
-public class CorsConfigurator implements WebMvcConfigurer {
+import java.util.Set;
 
-    @Value("${cors.allowed.origins}")
-    private String[] allowedOrigins;
+@Projection(name = "configclient", types= Application.class)
+public interface ApplicationProjection {
+    Integer getId();
 
-    @Override
-    public void addCorsMappings(CorsRegistry registry) {
-        registry.addMapping("/**")
-                .allowedMethods("*").allowedHeaders("*");
-    }
+    String getName();
+
+    String getClientId();
+
+    Set<String> getLoginUrls();
+
+    String getLogoutUrl();
+
+    String getCss();
+
+    boolean isActivated();
+
+    String getClientSecret();
+
+    Set<Scope> getScopeList();
+
+    ApplicationType getApplicationType();
+
+    boolean isTrustworthy();
+
 }

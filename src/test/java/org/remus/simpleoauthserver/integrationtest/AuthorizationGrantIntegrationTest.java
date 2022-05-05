@@ -1,3 +1,23 @@
+/**
+ * Copyright(c) 2022 Tom Seidel, Remus Software
+ *
+ * Licensed to the Apache Software Foundation (ASF) under one
+ * or more contributor license agreements.  See the NOTICE file
+ * distributed with this work for additional information
+ * regarding copyright ownership.  The ASF licenses this file
+ * to you under the Apache License, Version 2.0 (the
+ * "License"); you may not use this file except in compliance
+ * with the License.  You may obtain a copy of the License at
+ *
+ *   http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing,
+ * software distributed under the License is distributed on an
+ * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+ * KIND, either express or implied.  See the License for the
+ * specific language governing permissions and limitations
+ * under the License.
+ */
 package org.remus.simpleoauthserver.integrationtest;
 
 import io.jsonwebtoken.Claims;
@@ -25,6 +45,8 @@ import static io.restassured.RestAssured.given;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.ArgumentMatchers.contains;
 
 /**
  * <pre>
@@ -49,6 +71,7 @@ class AuthorizationGrantIntegrationTest extends BaseRest {
     private static int scope1;
     private static int scope2;
     private static int newApplication;
+    private static int newPkceApplication;
     private static int user;
     private static int myOrg;
     private static String accessToken;
@@ -60,7 +83,9 @@ class AuthorizationGrantIntegrationTest extends BaseRest {
             scope2 = createNewScope("myapi.send", "Send some stuff");
 
             newApplication = registerNewApi("jp98GC73RJ2VBqZB", "9OZhG274HP16FRQg58f0IADSQNV3UFiL", "Auth-Test", ApplicationType.REGULAR);
+            newPkceApplication = registerNewApi("RN9SqW16D7GTZ5EP", "uLfX32zKPo0pQK6EWnGN8BS9VZ45N1w7", "PKCE-Test", ApplicationType.SPA);
             assignScopesToApi(newApplication, scope1, scope2);
+            assignScopesToApi(newPkceApplication, scope1, scope2);
             user = createUser("John Doe", "test@example.org", "mypassword");
             myOrg = createOrganization("MyOrg");
             assignUserToOrganization(myOrg, user);
@@ -299,5 +324,136 @@ class AuthorizationGrantIntegrationTest extends BaseRest {
         Jws<Claims> claimsJws = Jwts.parser().setSigningKey(publicKey).parseClaimsJws(accessTokenFromRefreshToken);
         assertEquals("test@example.org",claimsJws.getBody().getSubject());
         assertEquals("myapi.write",claimsJws.getBody().get("scope",String.class));
+    }
+
+    @Test
+    @Order(10)
+    /**
+     * This test is the normal authentication with PKCE. A user uses the login form,
+     * an access-code is generated and a second call with confidential client-information
+     * will be sent to acquire an access token. The user has to send in its first request the
+     * code-challenge token and in the second request the codeVerifier (regarding RFC7636-section 1.1)
+     */
+    void happyPathPkce() {
+
+        String codeVerifier = "hBNJtTtv6HWSarSvBY~dmkYPmDxzZ1m1T0OhS7.eWdPYtiRZpukxd8a7H6OF3r8rWo71vvzRJu9HGxfUvP~Fmih1awrBuBDfwi8~dOBytldIn.BJLbV6LsZzbILaAwis";
+        String codeChallenge = "jsF3ku14DpOgqow9BLPgGEusRWheFvnwzh9jSmHw4pY";
+
+        assignApplicationsToUser(user, newPkceApplication);
+        // Step1: Login via Html-Form with username and password
+        TestUtils.TestUser testUser = new TestUtils.TestUser("test@example.org", "mypassword", "RN9SqW16D7GTZ5EP", new String[]{"myapi.write"});
+        testUser.setCodeChallenge(codeChallenge);
+
+        // Step2: "Grab" the access token from response-header.
+        accessToken = loadAndSubmitLoginForm(testUser,false);
+        assertNotNull(accessToken);
+
+        // Step3: Get the access token for our user with the new scope
+        String tokenRequestUrl = "/auth/oauth/token";
+        Map<String, String> formParams = new HashMap<>();
+        formParams.put("grant_type", "authorization_code");
+        formParams.put("client_id", "RN9SqW16D7GTZ5EP");
+        formParams.put("code_verifier", codeVerifier);
+        formParams.put("code", accessToken);
+        formParams.put("redirect_uri", "http://localhost:8085/myApplication/auth");
+
+        ExtractableResponse<Response> answer = given().log().all().header(FORM_URLENCODED).formParams(formParams).post(tokenRequestUrl).then().extract();
+        answer.response().then().assertThat()
+                .statusCode(200);
+        String accessToken = answer.path("access_token");
+        assertNotNull(accessToken);
+
+        // We have our access token, now we check for the correct contents.
+        Jws<Claims> claimsJws = Jwts.parser().setSigningKey(publicKey).parseClaimsJws(accessToken);
+        assertEquals("test@example.org",claimsJws.getBody().getSubject());
+        assertEquals("myapi.write",claimsJws.getBody().get("scope",String.class));
+    }
+
+    @Test
+    @Order(11)
+    void pkceInvalidCodeVerifier() {
+        String codeChallenge = "9gcD4CYOtpYCFVsQL7dkbGIJPD-7oPcO1iR__GOl07s";
+        TestUtils.TestUser testUser = new TestUtils.TestUser("test@example.org", "mypassword", "RN9SqW16D7GTZ5EP", new String[]{"myapi.write"});
+        testUser.setCodeChallenge(codeChallenge);
+
+        // Step2: "Grab" the access token from response-header.
+        accessToken = loadAndSubmitLoginForm(testUser,false);
+        assertNotNull(accessToken);
+
+        // Step3: Get the access token for our user with the new scope
+        String tokenRequestUrl = "/auth/oauth/token";
+        Map<String, String> formParams = new HashMap<>();
+        formParams.put("grant_type", "authorization_code");
+        formParams.put("client_id", "RN9SqW16D7GTZ5EP");
+        formParams.put("code_verifier","someRandomStuff");
+        formParams.put("code", accessToken);
+        formParams.put("redirect_uri", "http://localhost:8085/myApplication/auth");
+
+        ExtractableResponse<Response> answer = given().log().all().header(FORM_URLENCODED).formParams(formParams).post(tokenRequestUrl).then().extract();
+        answer.response().then().assertThat()
+                .statusCode(400);
+        assertTrue(answer.response().asPrettyString().contains("PKCE Code-Challenge was not successful."));
+    }
+
+    @Test
+    void noClientId() {
+        TestUtils.TestUser user = new TestUtils.TestUser("test@example.org", "mypassword", "jp98GC73RJ2VBqZB", new String[]{"myapi.write"});
+        String loginUrl = getBaseUrl() + "/auth/oauth/authorize?response_type=code" +
+                "&scope="+ String.join(",",user.getScope()) + "" +
+                "&redirect_uri=http://localhost:8085/myApplication/auth&state=12345";
+
+        ExtractableResponse<Response> response = given().log().all().get(loginUrl).then().extract();
+        assertEquals(400,response.statusCode());
+        assertThat(response.asPrettyString()).contains("client_id is missing");
+    }
+
+    @Test
+    void wrongResponseType() {
+        TestUtils.TestUser user = new TestUtils.TestUser("test@example.org", "mypassword", "jp98GC73RJ2VBqZB", new String[]{"myapi.write"});
+        String loginUrl = getBaseUrl() + "/auth/oauth/authorize?response_type=invalid" +
+                "&scope="+ String.join(",",user.getScope()) + "&client_id=jp98GC73RJ2VBqZB" +
+                "&redirect_uri=http://localhost:8085/myApplication/auth&state=12345";
+
+        ExtractableResponse<Response> response = given().log().all().get(loginUrl).then().extract();
+        assertEquals(400,response.statusCode());
+        assertThat(response.asPrettyString()).contains("response_type is not 'code'");
+
+    }
+
+    @Test
+    void redirectNoAbsoluteUrl() {
+        TestUtils.TestUser user = new TestUtils.TestUser("test@example.org", "mypassword", "jp98GC73RJ2VBqZB", new String[]{"myapi.write"});
+        String loginUrl = getBaseUrl() + "/auth/oauth/authorize?response_type=code" +
+                "&scope="+ String.join(",",user.getScope()) + "&client_id=jp98GC73RJ2VBqZB" +
+                "&redirect_uri=/myApplication/auth&state=12345";
+
+        ExtractableResponse<Response> response = given().log().all().get(loginUrl).then().extract();
+        assertEquals(400,response.statusCode());
+        assertThat(response.asPrettyString()).contains("redirect_uri is not an absolute URL");
+
+    }
+    @Test
+    void noCodeChallenge() {
+        TestUtils.TestUser user = new TestUtils.TestUser("test@example.org", "mypassword", "RN9SqW16D7GTZ5EP", new String[]{"myapi.write"});
+        String loginUrl = getBaseUrl() + "/auth/oauth/authorize?response_type=code" +
+                "&scope="+ String.join(",",user.getScope()) + "&client_id=RN9SqW16D7GTZ5EP" +
+                "&redirect_uri=http://localhost:8085/myApplication/auth&state=12345&code_challenge_method=S256";
+
+        ExtractableResponse<Response> response = given().log().all().get(loginUrl).then().extract();
+        assertEquals(400,response.statusCode());
+        assertThat(response.asPrettyString()).contains("code_challenge is missing");
+
+    }
+
+    @Test
+    void invalidCodeChallengeMethod() {
+        TestUtils.TestUser user = new TestUtils.TestUser("test@example.org", "mypassword", "RN9SqW16D7GTZ5EP", new String[]{"myapi.write"});
+        String loginUrl = getBaseUrl() + "/auth/oauth/authorize?response_type=code" +
+                "&scope="+ String.join(",",user.getScope()) + "&client_id=RN9SqW16D7GTZ5EP" +
+                "&redirect_uri=http://localhost:8085/myApplication/auth&state=12345&code_challenge=anyValue&code_challenge_method=plain";
+
+        ExtractableResponse<Response> response = given().log().all().get(loginUrl).then().extract();
+        assertEquals(400,response.statusCode());
+        assertThat(response.asPrettyString()).contains("The server only accepts S256 pkce methods");
     }
 }

@@ -1,3 +1,23 @@
+/**
+ * Copyright(c) 2022 Tom Seidel, Remus Software
+ *
+ * Licensed to the Apache Software Foundation (ASF) under one
+ * or more contributor license agreements.  See the NOTICE file
+ * distributed with this work for additional information
+ * regarding copyright ownership.  The ASF licenses this file
+ * to you under the Apache License, Version 2.0 (the
+ * "License"); you may not use this file except in compliance
+ * with the License.  You may obtain a copy of the License at
+ *
+ *   http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing,
+ * software distributed under the License is distributed on an
+ * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+ * KIND, either express or implied.  See the License for the
+ * specific language governing permissions and limitations
+ * under the License.
+ */
 package org.remus.simpleoauthserver.grants;
 
 import io.jsonwebtoken.Claims;
@@ -9,6 +29,7 @@ import org.remus.simpleoauthserver.repository.UserRepository;
 import org.remus.simpleoauthserver.response.AccessTokenResponse;
 import org.remus.simpleoauthserver.service.ApplicationNotFoundException;
 import org.remus.simpleoauthserver.service.InvalidInputException;
+import org.remus.simpleoauthserver.service.InvalidTokenException;
 import org.remus.simpleoauthserver.service.JwtTokenService;
 import org.remus.simpleoauthserver.service.TokenBinService;
 import org.remus.simpleoauthserver.service.UserNotFoundException;
@@ -39,7 +60,7 @@ public class RefreshTokenGrant extends OAuthGrant {
         String clientSecret = extractClientSecret(body, authorization);
         String refreshToken = extractValue(body, "refresh_token").orElseThrow(() -> new InvalidInputException("refres_token parameter not set"));
         if (tokenBinService.isTokenInvalidated(refreshToken)) {
-            throw new InvalidInputException("The token is already invalidated.");
+            throw new InvalidTokenException("The token is already invalidated.");
         }
         Optional<Application> application = applicationRepository.findApplicationByClientIdAndClientSecretAndActivated(clientId, clientSecret, true);
         if (application.isEmpty()) {

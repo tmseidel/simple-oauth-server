@@ -18,22 +18,26 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-package org.remus.simpleoauthserver.security;
+package org.remus.simpleoauthserver.service;
 
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.context.annotation.Configuration;
-import org.springframework.web.servlet.config.annotation.CorsRegistry;
-import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
+public class PkceFailedException extends OAuthException {
+    public PkceFailedException() {
+        super();
+    }
 
-@Configuration
-public class CorsConfigurator implements WebMvcConfigurer {
+    public PkceFailedException(String message) {
+        super(message);
+    }
 
-    @Value("${cors.allowed.origins}")
-    private String[] allowedOrigins;
+    public PkceFailedException(String message, Throwable cause) {
+        super(message, cause);
+    }
 
-    @Override
-    public void addCorsMappings(CorsRegistry registry) {
-        registry.addMapping("/**")
-                .allowedMethods("*").allowedHeaders("*");
+    public PkceFailedException(Throwable cause) {
+        super(cause);
+    }
+
+    protected PkceFailedException(String message, Throwable cause, boolean enableSuppression, boolean writableStackTrace) {
+        super(message, cause, enableSuppression, writableStackTrace);
     }
 }
